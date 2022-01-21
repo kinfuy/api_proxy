@@ -22,8 +22,7 @@ interface RuleSet {
   isProxyReponse?: boolean;
   extendInfo: ExtendInfo;
 }
-
-type EventKey = '';
+type EventKey = 'api_proxy_open';
 interface PostMessage {
   key: EventKey;
   date: any;
