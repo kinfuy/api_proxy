@@ -15,6 +15,6 @@
     "suppressExcessPropertyErrors": true,
     "lib": ["esnext", "dom"]
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "typings/*.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "typings/*.d.ts", "src/libs/plugin/xmlProxy.js"],
   "exclude": ["node_modules"]
 }

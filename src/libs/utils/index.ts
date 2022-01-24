@@ -1,4 +1,3 @@
-import { addEventListener, windowPostMessage } from './dom';
-import { createStream } from './proxy';
-
-export { addEventListener, windowPostMessage, createStream };
+export { addEventListener, windowPostMessage } from './dom';
+export { createStream } from './proxy';
+export { IsurlExait, UUID, createRandomCode } from './util';

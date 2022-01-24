@@ -33,3 +33,5 @@ export const self_fetch_proxy = async (input: RequestInfo, init?: RequestInit): 
   const originResponse = await originFetch(input, init);
   return originResponse;
 };
+
+export const initFetchProxy = () => {};

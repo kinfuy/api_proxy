@@ -32,6 +32,7 @@ module.exports = merge(webapckBaseConfig, {
     customJs: path.resolve(__dirname, '../src/script/customJs/index.ts'),
     background: path.resolve(__dirname, '../src/script/backgroundJs/index.ts'),
     injectView: path.resolve(__dirname, '../src/source/inject.ts'),
+    devtoolView: path.resolve(__dirname, '../src/source/devtool.ts'),
   }, // 入口文件
   module: {
     rules: [
@@ -77,8 +78,13 @@ module.exports = merge(webapckBaseConfig, {
       filename: '../views/injectView.html',
       chunks: ['injectView'],
     }),
+    new HtmlWebpackPlugin({
+      template: path.resolve(__dirname, './../src/views/devtoolView.html'),
+      filename: '../views/devtoolView.html',
+      chunks: ['devtoolView'],
+    }),
     new CompressPlugin({
-      fileName: `TestMonster-V${pkg.version}.zip`,
+      fileName: `ApiProxy-V${pkg.version}.zip`,
       target: 'version',
     }),
   ],

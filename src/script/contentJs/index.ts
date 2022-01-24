@@ -1,13 +1,26 @@
 import 'babel-polyfill';
-import { injectCustomJs } from '../../libs/chrome';
+import { injectCustomJs, getChromeUrl, chromeAddListenerMessage } from '../../libs/chrome';
+import { EVENT_KEY } from '../../libs/config/const';
 import { addEventListener } from '../../libs/utils';
-import { IframeView } from '../../libs/class';
 const prefix = 'api_proxy';
+
+//谷歌监听消息
+chromeAddListenerMessage((message: PostMessage) => {
+  if (message.from === 'background') {
+    if (message.key === EVENT_KEY.API_PROXY_WEBSITE_SWITCH) {
+      window.postMessage(
+        {
+          from: 'content_script',
+          key: EVENT_KEY.API_PROXY_WEBSITE_SWITCH,
+          data: message.data,
+        },
+        '*'
+      );
+    }
+  }
+});
 document.onreadystatechange = async function () {
-  if (document.readyState === 'complete') {
+  if (document.readyState === 'interactive') {
     injectCustomJs('libs/script/customJs.js');
-    const iframeView: IframeView = new IframeView(`${prefix}-iframe-view`);
-    console.log(iframeView);
-    iframeView.show();
   }
 };

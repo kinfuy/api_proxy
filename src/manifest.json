@@ -6,7 +6,7 @@
   "background": {
     "service_worker": "libs/script/background.js",
     "script": [
-      "libs/plugin/hot-reload.js"
+      "/libs/plugin/hot-reload.js"
     ]
   },
   "content_security_policy": {},
@@ -34,6 +34,7 @@
       "run_at": "document_start"
     }
   ],
+  "devtools_page": "libs/views/devtoolView.html",
   "web_accessible_resources": [
     {
       "resources": [
