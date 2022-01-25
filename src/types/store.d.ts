@@ -5,6 +5,7 @@ interface WebSite {
   isProxy: boolean;
 }
 interface ProxyContent {
+  isOriginCatch: boolean;
   requestData: any;
   requestHeader: any;
   responseData: any;

@@ -88,11 +88,11 @@ export const sendMessageToContentScript = (message: PostMessage) => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs && tabs.length > 0) {
         try {
-          chrome.tabs.sendMessage(Number(tabs[0].id), message).then((response) => {
+          chrome.tabs.sendMessage(Number(tabs[0].id), message, {}, (response) => {
             resolve(response);
           });
         } catch (error) {
-          console.log('当前没有活跃的tabs');
+          console.log(error);
         }
       } else {
         console.log('当前没有活跃的tabs');
@@ -116,11 +116,8 @@ export const chromeAddListenerMessage = (callback: (request: PostMessage) => voi
  * @param key
  * @param data
  */
-export const sendMessageToExtension = (key: string, data: any) => {
-  chrome.runtime.sendMessage({
-    key,
-    data,
-  });
+export const sendMessageToExtension = (message: PostMessage) => {
+  chrome.runtime.sendMessage(message);
 };
 /**
  * 创建鼠标右键

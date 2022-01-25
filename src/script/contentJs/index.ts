@@ -1,5 +1,5 @@
 import 'babel-polyfill';
-import { injectCustomJs, getChromeUrl, chromeAddListenerMessage } from '../../libs/chrome';
+import { injectCustomJs, getChromeUrl, sendMessageToExtension, chromeAddListenerMessage } from '../../libs/chrome';
 import { EVENT_KEY } from '../../libs/config/const';
 import { addEventListener } from '../../libs/utils';
 const prefix = 'api_proxy';
@@ -21,6 +21,14 @@ chromeAddListenerMessage((message: PostMessage) => {
 });
 document.onreadystatechange = async function () {
   if (document.readyState === 'interactive') {
-    injectCustomJs('libs/script/customJs.js');
+    await injectCustomJs('libs/script/customJs.js');
+    console.log(getChromeUrl('/libs/script/devtoolView.html'));
+  }
+  if (document.readyState === 'complete') {
+    await sendMessageToExtension({
+      from: 'content_script',
+      key: EVENT_KEY.API_PROXY_INIT,
+      data: { url: window.location.href },
+    });
   }
 };

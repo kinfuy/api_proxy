@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "ApiProxy",
   "version": "0.0.1",
-  "description": "极简的API拦截工具!",
+  "description": "极简的API代理工具!",
   "background": {
     "service_worker": "libs/script/background.js",
     "script": [
@@ -12,8 +12,8 @@
   "content_security_policy": {},
   "action": {
     "default_icon": "assets/icon.png",
-    "default_title": "极简的API拦截工具!",
-    "default_popup": "libs/views/popup.html"
+    "default_title": "极简的API代理工具!",
+    "default_popup": "libs/views/popupView.html"
   },
   "icons": {
     "16": "assets/icon.png",

@@ -7,7 +7,7 @@ module.exports = merge(webapckBaseConfig, {
   mode: 'development',
   devtool: 'source-map',
   entry: {
-    main: path.resolve(__dirname, '../src/source/script.ts'),
+    main: path.resolve(__dirname, '../src/source/devtool.ts'),
   },
   module: {
     rules: [
@@ -48,7 +48,7 @@ module.exports = merge(webapckBaseConfig, {
       __VUE_PROD_DEVTOOLS__: false,
     }),
     new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, './../src/views/script.html'),
+      template: path.resolve(__dirname, './../src/views/devtoolView.html'),
       filename: 'index.html',
       inject: true,
     }),

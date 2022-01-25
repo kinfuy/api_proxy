@@ -5,7 +5,7 @@ import { getStoreKey, setStore } from './../../libs/chrome';
  * @param url
  * @returns
  */
-export const devToolInit = async (message: PostMessage) => {
+export const getUrlProxyInfo = async (message: PostMessage) => {
   if (!message.data.url) return null;
   const path = new URL(message.data.url);
   if (path.hostname) {
