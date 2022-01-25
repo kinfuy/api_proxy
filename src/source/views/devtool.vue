@@ -36,21 +36,51 @@
         <div class="api-editor">
           <div class="api-editor-title">
             <span>响应参数</span>
+            <div class="api-proxy-btn">MOCK</div>
+            <div class="api-proxy-btn">JSON</div>
           </div>
           <div class="response-data">
             <el-input
               :autosize="{ minRows: 2, maxRows: 4 }"
               v-model="item.proxyContent.responseData"
               type="textarea"
+              :disabled="!item.isEdit"
               placeholder="开启代理后会默认缓存上次响应参数，缓存参数不会进行拦截"
             />
           </div>
-          <div>请求参数</div>
+          <div class="api-editor-title">
+            <span>请求参数</span>
+          </div>
           <div class="request-data">
             <el-input
               :autosize="{ minRows: 2, maxRows: 4 }"
               v-model="item.proxyContent.requestData"
               type="textarea"
+              :disabled="!item.isEdit"
+              placeholder="开启代理后会默认缓存上次请求参数，缓存参数不会进行拦截"
+            />
+          </div>
+          <div class="api-editor-title">
+            <span>请求头</span>
+          </div>
+          <div class="request-data">
+            <el-input
+              :autosize="{ minRows: 1, maxRows: 2 }"
+              v-model="item.proxyContent.requestHeader"
+              type="textarea"
+              :disabled="true"
+              placeholder="开启代理后会默认缓存上次请求参数，缓存参数不会进行拦截"
+            />
+          </div>
+          <div class="api-editor-title">
+            <span>响应头</span>
+          </div>
+          <div class="request-data">
+            <el-input
+              :autosize="{ minRows: 1, maxRows: 2 }"
+              v-model="item.proxyContent.responseHeader"
+              type="textarea"
+              :disabled="true"
               placeholder="开启代理后会默认缓存上次请求参数，缓存参数不会进行拦截"
             />
           </div>
@@ -145,7 +175,7 @@ export default defineComponent({
         url: '',
         isProxy: false,
         method: 'GET',
-        isEdit: false,
+        isEdit: true,
         isShowJson: false,
         isMock: false,
         proxyContent: {
@@ -192,17 +222,6 @@ export default defineComponent({
 }
 .devtool-content {
   padding: 40px 20px;
-  .api-proxy-btn {
-    display: inline-block;
-    padding: 4px 8px;
-    background-color: #409eff;
-    color: #fff;
-    border-radius: 4px;
-    font-size: 12px;
-    &:hover {
-      opacity: 0.8;
-    }
-  }
   .api-item {
     display: flex;
     align-items: center;
@@ -231,6 +250,25 @@ export default defineComponent({
         }
       }
     }
+  }
+  .api-editor {
+    .api-editor-title {
+      margin-bottom: 5px;
+    }
+  }
+}
+.api-proxy-btn {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #409eff;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 12px;
+  &:hover {
+    opacity: 0.8;
+  }
+  & + .api-proxy-btn {
+    margin-left: 10px;
   }
 }
 </style>
