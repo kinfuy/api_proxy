@@ -14,6 +14,21 @@ export const IsurlExait = (url: string, keys: Array<string>) => {
   });
   return isExist;
 };
+/**
+ * url 是否存在于keys
+ * @param url
+ * @param keys
+ * @returns
+ */
+export const IsurlMatch = (url: string, keys: Array<string>) => {
+  let isExist = false;
+  keys.forEach((val) => {
+    if (url.indexOf(val) >= 0) {
+      isExist = true;
+    }
+  });
+  return isExist;
+};
 // 生成uuid
 export const UUID = (): string => {
   let d = new Date().getTime();

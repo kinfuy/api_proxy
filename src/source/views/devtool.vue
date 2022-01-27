@@ -26,64 +26,66 @@
             </div>
             <div class="api-btn">
               <span>
-                <el-switch size="small" v-model="item.isProxy" @change="handleChange" />
+                <el-switch size="small" v-model="item.isProxy" @change="handleAPiChange(item)" />
               </span>
               <span @click="handleEdit(item)" class="api-text text-edit">{{ item.isEdit ? '保存' : '编辑' }}</span>
-              <span class="api-text text-delete">删除</span>
+              <span @click="handleDelete(item)" class="api-text text-delete">删除</span>
             </div>
           </div>
         </template>
         <div class="api-editor">
           <div class="api-editor-title">
-            <span>响应参数</span>
-            <div class="api-proxy-btn">MOCK</div>
-            <div class="api-proxy-btn">JSON</div>
+            <span style="font-weight: 700">响应参数</span>
+            <div class="api-text text-edit">MOCK</div>
+            <div class="api-text text-edit">JSON</div>
           </div>
           <div class="response-data">
             <el-input
               :autosize="{ minRows: 2, maxRows: 4 }"
-              v-model="item.proxyContent.responseData"
+              v-model="item.proxyContent.response.data"
               type="textarea"
               :disabled="!item.isEdit"
-              placeholder="开启代理后会默认缓存上次响应参数，缓存参数不会进行拦截"
+              placeholder="开启代理后会默认缓存真实响应参数，缓存参数不会进行拦截"
             />
           </div>
           <div class="api-editor-title">
-            <span>请求参数</span>
+            <span style="font-weight: 700">请求参数</span>
+            <div class="api-text text-edit">MOCK</div>
+            <div class="api-text text-edit">JSON</div>
           </div>
           <div class="request-data">
             <el-input
               :autosize="{ minRows: 2, maxRows: 4 }"
-              v-model="item.proxyContent.requestData"
+              v-model="item.proxyContent.request.data"
               type="textarea"
               :disabled="!item.isEdit"
-              placeholder="开启代理后会默认缓存上次请求参数，缓存参数不会进行拦截"
+              placeholder="开启代理后会默认缓存真实请求参数，缓存参数不会进行拦截"
             />
           </div>
-          <div class="api-editor-title">
-            <span>请求头</span>
+          <!-- <div class="api-editor-title">
+            <span style="font-weight: 700">请求头</span>
           </div>
           <div class="request-data">
             <el-input
               :autosize="{ minRows: 1, maxRows: 2 }"
-              v-model="item.proxyContent.requestHeader"
+              v-model="item.proxyContent.request.header"
               type="textarea"
               :disabled="true"
-              placeholder="开启代理后会默认缓存上次请求参数，缓存参数不会进行拦截"
+              placeholder="开启代理后会默认缓存真实请求参数，缓存参数不会进行拦截"
             />
           </div>
           <div class="api-editor-title">
-            <span>响应头</span>
+            <span style="font-weight: 700">响应头</span>
           </div>
           <div class="request-data">
             <el-input
               :autosize="{ minRows: 1, maxRows: 2 }"
-              v-model="item.proxyContent.responseHeader"
+              v-model="item.proxyContent.response.header"
               type="textarea"
               :disabled="true"
-              placeholder="开启代理后会默认缓存上次请求参数，缓存参数不会进行拦截"
+              placeholder="开启代理后会默认缓存真实响应参数，缓存参数不会进行拦截"
             />
-          </div>
+          </div> -->
         </div>
       </el-collapse-item>
     </el-collapse>
@@ -95,11 +97,6 @@ import { devToolInjectScriptResult } from './../../libs/chrome';
 import { EVENT_KEY } from './../../libs/config/const';
 import MOCK from 'mockjs';
 import { UUID } from '../../libs/utils';
-interface ApiProxyDevtool extends ApiProxy {
-  isEdit: boolean;
-  isShowJson: boolean;
-  isMock: boolean;
-}
 export default defineComponent({
   name: 'Devtool',
   setup() {
@@ -109,7 +106,7 @@ export default defineComponent({
       storeKey: '',
       isProxy: false,
     });
-    const apiProxy: Ref<ApiProxyDevtool[]> = ref([]);
+    const apiProxy: Ref<ApiProxy[]> = ref([]);
     const activeName = ref('');
     let backgroundConnect: undefined | chrome.runtime.Port = undefined;
     const initDevtool = async () => {
@@ -136,11 +133,13 @@ export default defineComponent({
           case EVENT_KEY.API_PROXY_DEVTOOL_INIT:
             {
               webSite.value = message.data.webSite;
+              apiProxy.value = message.data.apiProxy;
             }
             break;
-          case EVENT_KEY.API_PROXY_WEBSITE_SWITCH:
+          case EVENT_KEY.API_PROXY_WEBSITE_UPDATE:
             {
               webSite.value = message.data.webSite;
+              apiProxy.value = message.data.apiProxy;
             }
             break;
           default:
@@ -163,7 +162,7 @@ export default defineComponent({
       if (backgroundConnect)
         backgroundConnect.postMessage({
           from: 'devtools',
-          key: EVENT_KEY.API_PROXY_WEBSITE_SWITCH,
+          key: EVENT_KEY.API_PROXY_WEBSITE_UPDATE,
           data: { url, webSite: webSite.value },
         });
     };
@@ -176,30 +175,72 @@ export default defineComponent({
         isProxy: false,
         method: 'GET',
         isEdit: true,
-        isShowJson: false,
-        isMock: false,
         proxyContent: {
-          isOriginCatch: false,
-          requestData: '',
-          responseData: '',
-          requestHeader: '',
-          responseHeader: '',
+          request: {
+            isOriginCatch: false,
+            showJson: false,
+            showMock: false,
+            data: '',
+            header: '',
+          },
+          response: {
+            isOriginCatch: false,
+            showJson: false,
+            showMock: false,
+            data: '',
+            header: '',
+          },
         },
       });
     };
-    const handleEdit = (item: ApiProxyDevtool) => {
+    const handleAPiChange = (item: ApiProxy) => {
       if (item.isEdit) {
-        console.log('保存');
-        item.isEdit = false;
+        item.isProxy = false;
+        return;
+      }
+      if (backgroundConnect) {
+        backgroundConnect.postMessage({
+          from: 'devtools',
+          key: EVENT_KEY.API_PROXY_APIPROXY_UPDATE,
+          data: {
+            webSite: webSite.value,
+            apiProxy: item,
+          },
+        });
+      }
+    };
+    const handleEdit = (item: ApiProxy) => {
+      if (item.isEdit) {
+        if (backgroundConnect) {
+          item.isEdit = false;
+          backgroundConnect.postMessage({
+            from: 'devtools',
+            key: EVENT_KEY.API_PROXY_APIPROXY_UPDATE,
+            data: {
+              webSite: webSite.value,
+              apiProxy: item,
+            },
+          });
+        }
       } else {
         item.isEdit = true;
+        item.isProxy = false;
+      }
+    };
+    const handleDelete = (item: ApiProxy) => {
+      if (backgroundConnect) {
+        backgroundConnect.postMessage({
+          from: 'devtools',
+          key: EVENT_KEY.API_PROXY_APIPROXY_DELETE,
+          data: { url: webSite.value.url, id: item.id },
+        });
       }
     };
 
     const stopPropagation = (e: Event) => {
       e.stopPropagation();
     };
-    return { webSite, apiProxy, handleChange, handleApiProxyAdd, handleEdit, activeName, stopPropagation };
+    return { webSite, apiProxy, handleChange, handleApiProxyAdd, handleEdit, handleDelete, activeName, stopPropagation, handleAPiChange };
   },
 });
 </script>
@@ -222,6 +263,21 @@ export default defineComponent({
 }
 .devtool-content {
   padding: 40px 20px;
+  .api-proxy-btn {
+    display: inline-block;
+    padding: 4px 8px;
+    background-color: #409eff;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    &:hover {
+      opacity: 0.8;
+    }
+    & + .api-proxy-btn {
+      margin-left: 10px;
+    }
+  }
   .api-item {
     display: flex;
     align-items: center;
@@ -234,16 +290,6 @@ export default defineComponent({
       align-items: center;
       flex-shrink: 0;
       margin: 0 30px 0 20px;
-      .api-text {
-        font-size: 12px;
-        color: #333;
-        margin-left: 10px;
-      }
-      .text-edit {
-        &:hover {
-          color: #409eff;
-        }
-      }
       .text-delete {
         &:hover {
           color: #f56c6c;
@@ -257,18 +303,16 @@ export default defineComponent({
     }
   }
 }
-.api-proxy-btn {
+.api-text {
   display: inline-block;
-  padding: 4px 8px;
-  background-color: #409eff;
-  color: #fff;
-  border-radius: 4px;
   font-size: 12px;
+  color: #333;
+  margin-left: 10px;
+  cursor: pointer;
+}
+.text-edit {
   &:hover {
-    opacity: 0.8;
-  }
-  & + .api-proxy-btn {
-    margin-left: 10px;
+    color: #409eff;
   }
 }
 </style>

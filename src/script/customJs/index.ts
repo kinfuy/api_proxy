@@ -1,27 +1,18 @@
 import { initFetchProxy, initXMLHttpRequest } from './../../libs/plugin/proxy';
-import { addEventListener } from '../../libs/utils';
+import { addEventListener, IsurlMatch } from '../../libs/utils';
 import { EVENT_KEY } from '../../libs/config/const';
+import cloneDeep from 'lodash.clonedeep';
 const originXMLHttpRequest = window.XMLHttpRequest;
 
-const createHooks = () => {
+const createHooks = (webSite: WebSite, apiProxy: ApiProxy[]) => {
   const beforeXmlOpen = (method: string, url: string | URL) => {
-    console.log('open前钩子');
-    console.log(method, url);
-    return {
-      method,
-      url,
-    };
+    return { method, url };
   };
-  const beforeXmlRequest = (options: { url: URL | string; method: string }, body?: Document | XMLHttpRequestBodyInit | null) => {
-    console.log('请求前钩子');
-    console.log(options);
-    console.log(body);
-    return body;
+  const beforeXmlRequest = (proxyContent: ProxyContent, body?: Document | XMLHttpRequestBodyInit | null) => {
+    return proxyContent.request.data;
   };
-  const beforeXmlResponse = <T>(response: T) => {
-    console.log('响应前钩子');
-    console.log(response);
-    return response;
+  const beforeXmlResponse = (proxyContent: ProxyContent) => {
+    return proxyContent.response.data;
   };
 
   return {
@@ -31,16 +22,17 @@ const createHooks = () => {
   };
 };
 const initProxy = (
-  isProxy: boolean,
+  webSite: WebSite,
+  apiProxy: ApiProxy[],
   beforeXmlOpen: (method: string, url: string | URL) => { method: string; url: string | URL },
   beforeXmlRequest: (
-    options: { url: URL | string; method: string },
+    proxyContent: ProxyContent,
     body?: Document | XMLHttpRequestBodyInit | null | undefined
   ) => Document | XMLHttpRequestBodyInit | null | undefined,
-  beforeXmlResponse: <T>(response: T) => T
+  beforeXmlResponse: (proxyContent: ProxyContent) => any
 ) => {
-  if (isProxy) {
-    const SELF_XML_HTTP_REQUEST = initXMLHttpRequest(beforeXmlOpen, beforeXmlRequest, beforeXmlResponse);
+  if (webSite.isProxy) {
+    const SELF_XML_HTTP_REQUEST = initXMLHttpRequest(originXMLHttpRequest, apiProxy, beforeXmlOpen, beforeXmlRequest, beforeXmlResponse);
     window.XMLHttpRequest = SELF_XML_HTTP_REQUEST;
   } else {
     window.XMLHttpRequest = originXMLHttpRequest;
@@ -49,9 +41,9 @@ const initProxy = (
 addEventListener(window, 'message', (info: any) => {
   const message = info.data as PostMessage;
   if (message.from === 'content_script') {
-    if (message.key === EVENT_KEY.API_PROXY_WEBSITE_SWITCH) {
-      const { beforeXmlOpen, beforeXmlRequest, beforeXmlResponse } = createHooks();
-      initProxy(message.data.webSite.isProxy, beforeXmlOpen, beforeXmlRequest, beforeXmlResponse);
+    if (message.key === EVENT_KEY.API_PROXY_WEBSITE_UPDATE) {
+      const { beforeXmlOpen, beforeXmlRequest, beforeXmlResponse } = createHooks(message.data.webSite, message.data.apiProxy);
+      initProxy(message.data.webSite, message.data.apiProxy, beforeXmlOpen, beforeXmlRequest, beforeXmlResponse);
     }
   }
 });

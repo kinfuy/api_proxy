@@ -5,16 +5,26 @@ interface WebSite {
   isProxy: boolean;
 }
 interface ProxyContent {
-  isOriginCatch: boolean;
-  requestData: any;
-  requestHeader: any;
-  responseData: any;
-  responseHeader: any;
+  request: {
+    isOriginCatch: boolean;
+    showJson: boolean;
+    showMock: boolean;
+    data: any;
+    header: any;
+  };
+  response: {
+    isOriginCatch: boolean;
+    showJson: boolean;
+    showMock: boolean;
+    data: any;
+    header: any;
+  };
 }
 interface ApiProxy {
   id: string;
   name: string;
   url: string;
+  isEdit: boolean;
   isProxy: boolean;
   method: 'GET' | 'POST';
   proxyContent: ProxyContent;

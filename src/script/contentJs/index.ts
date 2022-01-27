@@ -7,15 +7,32 @@ const prefix = 'api_proxy';
 //谷歌监听消息
 chromeAddListenerMessage((message: PostMessage) => {
   if (message.from === 'background') {
-    if (message.key === EVENT_KEY.API_PROXY_WEBSITE_SWITCH) {
+    if (message.key === EVENT_KEY.API_PROXY_WEBSITE_UPDATE) {
       window.postMessage(
         {
           from: 'content_script',
-          key: EVENT_KEY.API_PROXY_WEBSITE_SWITCH,
+          key: EVENT_KEY.API_PROXY_WEBSITE_UPDATE,
           data: message.data,
         },
         '*'
       );
+    }
+  }
+});
+addEventListener(window, 'message', (info: any) => {
+  const message = info.data as PostMessage;
+  if (message.from === 'inject_script') {
+    switch (message.key) {
+      case EVENT_KEY.API_PROXY_APIPROXY_UPDATE: {
+        sendMessageToExtension({
+          from: 'content_script',
+          key: EVENT_KEY.API_PROXY_APIPROXY_UPDATE,
+          data: { apiProxy: message.data.apiProxy, url: window.location.href },
+        });
+        break;
+      }
+      default:
+        break;
     }
   }
 });
