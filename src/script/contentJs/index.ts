@@ -1,39 +1,37 @@
 import 'babel-polyfill';
 import { injectCustomJs, getChromeUrl, sendMessageToExtension, chromeAddListenerMessage } from '../../libs/chrome';
 import { EVENT_KEY } from '../../libs/config/const';
-import { addEventListener } from '../../libs/utils';
-const prefix = 'api_proxy';
-
+import { addEventListener, windowPostMessage } from '../../libs/utils';
 //谷歌监听消息
 chromeAddListenerMessage((message: PostMessage) => {
-  if (message.from === 'background') {
-    if (message.key === EVENT_KEY.API_PROXY_WEBSITE_UPDATE) {
-      window.postMessage(
-        {
-          from: 'content_script',
-          key: EVENT_KEY.API_PROXY_WEBSITE_UPDATE,
-          data: message.data,
-        },
-        '*'
-      );
+  if (message.from !== 'background') return; //只接收来着background的信息
+  switch (message.key) {
+    case EVENT_KEY.API_PROXY_BACKGROUND_UPDATE: {
+      windowPostMessage({
+        from: 'content_script',
+        key: EVENT_KEY.API_PROXY_BACKGROUND_UPDATE,
+        data: message.data,
+      });
+      break;
     }
+    default:
+      break;
   }
 });
 addEventListener(window, 'message', (info: any) => {
   const message = info.data as PostMessage;
-  if (message.from === 'inject_script') {
-    switch (message.key) {
-      case EVENT_KEY.API_PROXY_APIPROXY_UPDATE: {
-        sendMessageToExtension({
-          from: 'content_script',
-          key: EVENT_KEY.API_PROXY_APIPROXY_UPDATE,
-          data: { apiProxy: message.data.apiProxy, url: window.location.href },
-        });
-        break;
-      }
-      default:
-        break;
+  if (message.from !== 'inject_script') return; //只接收来着inject_script的信息
+  switch (message.key) {
+    case EVENT_KEY.API_PROXY_INJECT_UPDATA: {
+      sendMessageToExtension({
+        from: 'content_script',
+        key: EVENT_KEY.API_PROXY_INJECT_UPDATA,
+        data: { apiProxy: message.data.apiProxy, url: message.data.url },
+      });
+      break;
     }
+    default:
+      break;
   }
 });
 document.onreadystatechange = async function () {
@@ -44,7 +42,7 @@ document.onreadystatechange = async function () {
   if (document.readyState === 'complete') {
     await sendMessageToExtension({
       from: 'content_script',
-      key: EVENT_KEY.API_PROXY_INIT,
+      key: EVENT_KEY.API_PROXY_INJECT_INIT,
       data: { url: window.location.href },
     });
   }

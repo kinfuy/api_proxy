@@ -97,6 +97,7 @@ import { devToolInjectScriptResult } from './../../libs/chrome';
 import { EVENT_KEY } from './../../libs/config/const';
 import MOCK from 'mockjs';
 import { UUID } from '../../libs/utils';
+import { cloneDeep } from 'lodash';
 export default defineComponent({
   name: 'Devtool',
   setup() {
@@ -119,32 +120,28 @@ export default defineComponent({
         port.postMessage({
           from: 'devtools',
           key: EVENT_KEY.API_PROXY_DEVTOOL_INIT,
-          data: {
-            tabId: chrome.devtools.inspectedWindow.tabId,
-            url,
-          },
+          data: { url },
         });
       }
       return port;
     };
     const addListenerHandler = (message: PostMessage) => {
-      if (message.from == 'background') {
-        switch (message.key) {
-          case EVENT_KEY.API_PROXY_DEVTOOL_INIT:
-            {
-              webSite.value = message.data.webSite;
-              apiProxy.value = message.data.apiProxy;
-            }
-            break;
-          case EVENT_KEY.API_PROXY_WEBSITE_UPDATE:
-            {
-              webSite.value = message.data.webSite;
-              apiProxy.value = message.data.apiProxy;
-            }
-            break;
-          default:
-            break;
+      if (message.from !== 'background') return;
+      switch (message.key) {
+        case EVENT_KEY.API_PROXY_DEVTOOL_INIT: {
+          webSite.value = cloneDeep(message.data.webSite);
+          apiProxy.value = cloneDeep(message.data.webSite);
+          break;
         }
+
+        case EVENT_KEY.API_PROXY_BACKGROUND_UPDATE: {
+          webSite.value = cloneDeep(message.data.webSite);
+          apiProxy.value = cloneDeep(message.data.apiProxy);
+          break;
+        }
+
+        default:
+          break;
       }
     };
     onMounted(async () => {
@@ -162,7 +159,7 @@ export default defineComponent({
       if (backgroundConnect)
         backgroundConnect.postMessage({
           from: 'devtools',
-          key: EVENT_KEY.API_PROXY_WEBSITE_UPDATE,
+          key: EVENT_KEY.API_PROXY_DEVTOOL_WEBSITE_UPDATA,
           data: { url, webSite: webSite.value },
         });
     };
@@ -201,7 +198,7 @@ export default defineComponent({
       if (backgroundConnect) {
         backgroundConnect.postMessage({
           from: 'devtools',
-          key: EVENT_KEY.API_PROXY_APIPROXY_UPDATE,
+          key: EVENT_KEY.API_PROXY_DEVTOOL_API_UPDATA,
           data: {
             webSite: webSite.value,
             apiProxy: item,
@@ -215,7 +212,7 @@ export default defineComponent({
           item.isEdit = false;
           backgroundConnect.postMessage({
             from: 'devtools',
-            key: EVENT_KEY.API_PROXY_APIPROXY_UPDATE,
+            key: EVENT_KEY.API_PROXY_DEVTOOL_API_UPDATA,
             data: {
               webSite: webSite.value,
               apiProxy: item,
@@ -231,7 +228,7 @@ export default defineComponent({
       if (backgroundConnect) {
         backgroundConnect.postMessage({
           from: 'devtools',
-          key: EVENT_KEY.API_PROXY_APIPROXY_DELETE,
+          key: EVENT_KEY.API_PROXY_DEVTOOL_DELETE,
           data: { url: webSite.value.url, id: item.id },
         });
       }

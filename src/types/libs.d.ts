@@ -6,3 +6,12 @@ interface PostMessage {
   key: string;
   data: any;
 }
+
+interface RequestConfig {
+  input: RequestInfo;
+  init?: RequestInit;
+}
+interface CustomRequestConfig extends RequestConfig {
+  isMock: boolean;
+  apiProxy: ApiProxy | undefined;
+}

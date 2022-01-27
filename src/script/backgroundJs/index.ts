@@ -4,156 +4,82 @@ import { proxySwitch, getUrlProxyInfo, updateProxy, deleteProxy } from './devtoo
 import { chromeAddListenerMessage, sendMessageToContentScript } from '../../libs/chrome';
 let devToolPort: chrome.runtime.Port | undefined;
 chromeAddListenerMessage(async (message) => {
-  if (message.from === 'content_script') {
-    if (message.key === EVENT_KEY.API_PROXY_INIT) {
+  if (message.from !== 'content_script') return;
+  switch (message.key) {
+    case EVENT_KEY.API_PROXY_INJECT_INIT: {
       let path = new URL(message.data.url);
-      getUrlProxyInfo(path.hostname, true).then((res) => {
-        if (res) {
-          sendMessageToContentScript({
-            from: 'background',
-            key: EVENT_KEY.API_PROXY_WEBSITE_UPDATE,
-            data: {
-              webSite: res.webSite,
-              apiProxy: res.apiProxy,
-            },
-          });
-        }
-      });
+      const proxy = await getUrlProxyInfo(path.hostname, true);
+      if (proxy) await noticeApiPrxoxyUpdata(proxy.webSite, proxy.apiProxy);
+      break;
     }
-    if (message.key === EVENT_KEY.API_PROXY_APIPROXY_UPDATE) {
-      console.log('🔥log=>index=>24:message:%o', message);
-      updateProxy(message).then(() => {
-        let path = new URL(message.data.url);
-        getUrlProxyInfo(path.hostname, true).then((res) => {
-          if (res) {
-            sendMessageToContentScript({
-              from: 'background',
-              key: EVENT_KEY.API_PROXY_WEBSITE_UPDATE,
-              data: {
-                webSite: res.webSite,
-                apiProxy: res.apiProxy,
-              },
-            });
-            if (devToolPort) {
-              devToolPort.postMessage({
-                from: 'background',
-                key: EVENT_KEY.API_PROXY_DEVTOOL_INIT,
-                data: {
-                  webSite: res.webSite,
-                  apiProxy: res.apiProxy,
-                },
-              });
-            }
-          }
-        });
-      });
+    case EVENT_KEY.API_PROXY_INJECT_UPDATA: {
+      await updateProxy(message);
+      let path = new URL(message.data.url);
+      const proxy = await getUrlProxyInfo(path.hostname, true);
+      if (proxy) await noticeApiPrxoxyUpdata(proxy.webSite, proxy.apiProxy);
+      break;
     }
-    if (message.key === EVENT_KEY.API_PROXY_APIPROXY_DELETE) {
-      deleteProxy(message.data.id).then(() => {
-        let path = new URL(message.data.url);
-        getUrlProxyInfo(path.hostname, true).then((res) => {
-          if (res) {
-            sendMessageToContentScript({
-              from: 'background',
-              key: EVENT_KEY.API_PROXY_WEBSITE_UPDATE,
-              data: {
-                webSite: res.webSite,
-                apiProxy: res.apiProxy,
-              },
-            });
-            if (devToolPort) {
-              devToolPort.postMessage({
-                from: 'background',
-                key: EVENT_KEY.API_PROXY_DEVTOOL_INIT,
-                data: {
-                  webSite: res.webSite,
-                  apiProxy: res.apiProxy,
-                },
-              });
-            }
-          }
-        });
-      });
-    }
+    default:
   }
 });
 chrome.runtime.onConnect.addListener(function (port) {
-  devToolPort = port;
-  const extensionListener = (message: PostMessage, port: chrome.runtime.Port) => {
-    if (message.from == 'devtools') {
-      switch (message.key) {
-        case EVENT_KEY.API_PROXY_WEBSITE_UPDATE: {
-          proxySwitch(message).then((res) => {
-            if (res) {
-              sendMessageToContentScript({
-                from: 'background',
-                key: EVENT_KEY.API_PROXY_WEBSITE_UPDATE,
-                data: {
-                  webSite: res.webSite,
-                  apiProxy: res.apiProxy,
-                },
-              });
-              port.postMessage({
-                from: 'background',
-                key: EVENT_KEY.API_PROXY_WEBSITE_UPDATE,
-                data: {
-                  webSite: res.webSite,
-                  apiProxy: res.apiProxy,
-                },
-              });
-            }
-          });
-          break;
-        }
-        case EVENT_KEY.API_PROXY_DEVTOOL_INIT: {
-          let path = new URL(message.data.url);
-          getUrlProxyInfo(path.hostname).then((res) => {
-            if (res) {
-              sendMessageToContentScript({
-                from: 'background',
-                key: EVENT_KEY.API_PROXY_WEBSITE_UPDATE,
-                data: {
-                  webSite: res.webSite,
-                  apiProxy: res.apiProxy,
-                },
-              });
-              port.postMessage({
-                from: 'background',
-                key: EVENT_KEY.API_PROXY_DEVTOOL_INIT,
-                data: {
-                  webSite: res.webSite,
-                  apiProxy: res.apiProxy,
-                },
-              });
-            }
-          });
-          break;
-        }
-        case EVENT_KEY.API_PROXY_APIPROXY_UPDATE: {
-          updateProxy(message).then(() => {
-            getUrlProxyInfo(message.data.webSite.url, true).then((res) => {
-              if (res) {
-                sendMessageToContentScript({
-                  from: 'background',
-                  key: EVENT_KEY.API_PROXY_WEBSITE_UPDATE,
-                  data: {
-                    webSite: res.webSite,
-                    apiProxy: res.apiProxy,
-                  },
-                });
-              }
-            });
-          });
-          break;
-        }
-        default:
-          break;
+  const extensionListener = async (message: PostMessage, port: chrome.runtime.Port) => {
+    console.log('devtool连接');
+    devToolPort = port;
+    if (message.from != 'devtools') return;
+    switch (message.key) {
+      case EVENT_KEY.API_PROXY_DEVTOOL_WEBSITE_UPDATA: {
+        const proxy = await proxySwitch(message);
+        if (proxy) await noticeApiPrxoxyUpdata(proxy.webSite, proxy.apiProxy);
+        break;
       }
+      case EVENT_KEY.API_PROXY_DEVTOOL_INIT: {
+        let path = new URL(message.data.url);
+        const proxy = await getUrlProxyInfo(path.hostname);
+        if (proxy) await noticeApiPrxoxyUpdata(proxy.webSite, proxy.apiProxy);
+        break;
+      }
+      case EVENT_KEY.API_PROXY_DEVTOOL_API_UPDATA: {
+        await updateProxy(message);
+        const proxy = await getUrlProxyInfo(message.data.webSite.url);
+        if (proxy) await noticeApiPrxoxyUpdata(proxy.webSite, proxy.apiProxy);
+        break;
+      }
+      case EVENT_KEY.API_PROXY_DEVTOOL_DELETE: {
+        await deleteProxy(message.data.id);
+        const proxy = await getUrlProxyInfo(message.data.url);
+        if (proxy) await noticeApiPrxoxyUpdata(proxy.webSite, proxy.apiProxy);
+        break;
+      }
+      default:
+        break;
     }
   };
   port.onMessage.addListener(extensionListener);
-  port.onDisconnect.addListener(function (port) {
-    devToolPort = undefined;
+  port.onDisconnect.addListener((port) => {
     port.onMessage.removeListener(extensionListener);
+    devToolPort = undefined;
   });
 });
+
+/**
+ * 通知信息更新
+ * @param webSite
+ * @param apiProxy
+ */
+function noticeApiPrxoxyUpdata(webSite: WebSite, apiProxy: ApiProxy[]) {
+  let message = {
+    from: 'background',
+    key: EVENT_KEY.API_PROXY_BACKGROUND_UPDATE,
+    data: {
+      webSite,
+      apiProxy,
+    },
+  };
+  sendMessageToContentScript(message);
+  if (devToolPort) {
+    devToolPort.postMessage(message);
+  } else {
+    console.log('devtool已经掉线');
+  }
+}

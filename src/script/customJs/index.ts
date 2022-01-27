@@ -3,6 +3,7 @@ import { addEventListener, IsurlMatch } from '../../libs/utils';
 import { EVENT_KEY } from '../../libs/config/const';
 import cloneDeep from 'lodash.clonedeep';
 const originXMLHttpRequest = window.XMLHttpRequest;
+const originFetch = window.fetch;
 
 const createHooks = (webSite: WebSite, apiProxy: ApiProxy[]) => {
   const beforeXmlOpen = (method: string, url: string | URL) => {
@@ -33,17 +34,26 @@ const initProxy = (
 ) => {
   if (webSite.isProxy) {
     const SELF_XML_HTTP_REQUEST = initXMLHttpRequest(originXMLHttpRequest, apiProxy, beforeXmlOpen, beforeXmlRequest, beforeXmlResponse);
+    const SELF_FETCH = initFetchProxy(originFetch, apiProxy);
     window.XMLHttpRequest = SELF_XML_HTTP_REQUEST;
+    window.fetch = SELF_FETCH;
   } else {
     window.XMLHttpRequest = originXMLHttpRequest;
+    window.fetch = originFetch;
   }
 };
 addEventListener(window, 'message', (info: any) => {
   const message = info.data as PostMessage;
-  if (message.from === 'content_script') {
-    if (message.key === EVENT_KEY.API_PROXY_WEBSITE_UPDATE) {
+  if (message.from !== 'content_script') return;
+  switch (message.key) {
+    case EVENT_KEY.API_PROXY_BACKGROUND_UPDATE: {
+      // 监听到背景页通知需要更新代理信息
+      // 重新初始化xml fetch
       const { beforeXmlOpen, beforeXmlRequest, beforeXmlResponse } = createHooks(message.data.webSite, message.data.apiProxy);
       initProxy(message.data.webSite, message.data.apiProxy, beforeXmlOpen, beforeXmlRequest, beforeXmlResponse);
+      break;
     }
+    default:
+      break;
   }
 });

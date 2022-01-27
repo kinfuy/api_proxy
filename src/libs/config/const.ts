@@ -1,9 +1,39 @@
 export type EventKey = keyof typeof EVENT_KEY;
 export const EVENT_KEY = {
-  API_PROXY_INIT: 'API_PROXY_INIT',
-  API_PROXY_OPEN: 'API_PROXY_OPEN', // 开启代理
-  API_PROXY_DEVTOOL_INIT: 'API_PROXY_DEVTOOL_INIT', // devtool初始化
-  API_PROXY_WEBSITE_UPDATE: 'API_PROXY_WEBSITE_UPDATE', // 代理切换
-  API_PROXY_APIPROXY_UPDATE: 'API_PROXY_APIPROXY_UPDATE', //代理api新建或更新
-  API_PROXY_APIPROXY_DELETE: 'API_PROXY_APIPROXY_DELETE', // 删除api
+  /**
+   * DEVTOOL删除 API
+   * @param message.data 参数 id url
+   */
+  API_PROXY_DEVTOOL_DELETE: 'API_PROXY_DEVTOOL_DELETE',
+
+  /**
+   * devtool初始化
+   * @param message.data 参数url
+   */
+  API_PROXY_DEVTOOL_INIT: 'API_PROXY_DEVTOOL_INIT',
+  /**
+   * 网站初始化
+   * @param message.data 参数url
+   */
+  API_PROXY_INJECT_INIT: 'API_PROXY_INJECT_INIT',
+  /**
+   * INJECT 更新了api
+   * @param message.data 参数apiProxy url
+   */
+  API_PROXY_INJECT_UPDATA: 'API_PROXY_INJECT_UPDATA',
+  /**
+   * DEVTOOL 更新了api
+   * @param message.data 参数apiProxy url
+   */
+  API_PROXY_DEVTOOL_API_UPDATA: 'API_PROXY_DEVTOOL_API_UPDATA',
+  /**
+   * DEVTOOL 更新了api
+   * @param message.data 参数apiProxy url
+   */
+  API_PROXY_DEVTOOL_WEBSITE_UPDATA: 'API_PROXY_DEVTOOL_WEBSITE_UPDATA',
+  /**
+   * 代理信息更新，用于广播消息
+   * @param message.data
+   */
+  API_PROXY_BACKGROUND_UPDATE: 'API_PROXY_BACKGROUND_UPDATE',
 };

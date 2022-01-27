@@ -26,6 +26,9 @@ export const IsurlMatch = (url: string, keys: Array<string>) => {
     if (url.indexOf(val) >= 0) {
       isExist = true;
     }
+    if (val.indexOf(url) >= 0) {
+      isExist = true;
+    }
   });
   return isExist;
 };

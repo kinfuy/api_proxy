@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash.clonedeep';
 import { EventKey } from '../config/const';
-import { IsurlMatch } from '../utils';
+import { IsurlMatch, windowPostMessage } from '../utils';
 
 export const initXMLHttpRequest = (
   originXmlHttpRequest: typeof window.XMLHttpRequest,
@@ -24,7 +24,7 @@ export const initXMLHttpRequest = (
     }
     sendMessageToContent(key: EventKey, data: any) {
       const message: PostMessage = { from: 'inject_script', key, data };
-      window.postMessage(message, '*');
+      windowPostMessage(message);
     }
     async open(method: string, url: string | URL, async: boolean = true, username?: string | null, password?: string | null) {
       if (apiProxy.some((x) => x.method === method && IsurlMatch(url.toString(), [x.url]))) {
@@ -42,19 +42,24 @@ export const initXMLHttpRequest = (
     }
     async send(body?: Document | XMLHttpRequestBodyInit | null) {
       if (this.isMock && this.apiProxy) {
-        if (this.apiProxy.proxyContent.request.data) {
+        if (this.apiProxy.proxyContent.request.data && this.apiProxy.proxyContent.request.isOriginCatch !== true) {
           this.apiProxy.proxyContent.request.isOriginCatch = false;
           const self_body = await beforeXmlRequest(this.apiProxy.proxyContent, body);
           await originXmlHttpRequest.prototype.send.call(this, self_body);
         } else {
           this.apiProxy.proxyContent.request.isOriginCatch = true;
           this.apiProxy.proxyContent.request.data = body;
-          this.sendMessageToContent('API_PROXY_APIPROXY_UPDATE', {
+          this.sendMessageToContent('API_PROXY_INJECT_UPDATA', {
+            url: window.location.href,
             apiProxy: cloneDeep(this.apiProxy),
           });
           await originXmlHttpRequest.prototype.send.call(this, body);
         }
-        if (this.apiProxy.proxyContent.response.data && this.responseType === 'json') {
+        if (
+          this.apiProxy.proxyContent.response.data &&
+          this.apiProxy.proxyContent.response.isOriginCatch !== true &&
+          this.responseType === 'json'
+        ) {
           this.apiProxy.proxyContent.response.isOriginCatch = false;
           let self_response = await beforeXmlResponse(this.apiProxy.proxyContent);
           self_response = JSON.parse(self_response);
@@ -68,7 +73,8 @@ export const initXMLHttpRequest = (
               if (this.apiProxy && this.responseType === 'json') {
                 this.apiProxy.proxyContent.response.data = JSON.stringify(this.response);
                 this.apiProxy.proxyContent.response.isOriginCatch = true;
-                this.sendMessageToContent('API_PROXY_APIPROXY_UPDATE', {
+                this.sendMessageToContent('API_PROXY_INJECT_UPDATA', {
+                  url: window.location.href,
                   apiProxy: cloneDeep(this.apiProxy),
                 });
               }
