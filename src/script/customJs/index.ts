@@ -1,3 +1,4 @@
+import 'babel-polyfill';
 import { initFetchProxy, initXMLHttpRequest } from './../../libs/plugin/proxy';
 import { addEventListener, IsurlMatch } from '../../libs/utils';
 import { EVENT_KEY } from '../../libs/config/const';

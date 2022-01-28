@@ -34,6 +34,7 @@ export const initXMLHttpRequest = (
           }
         });
         this.isMock = true;
+        console.log(`[ApiProxy]: 拦截到: ${method}  ${url}`);
       }
       const openQuery = beforeXmlOpen(method, url);
       this.proxyUrl = openQuery.url;
@@ -45,6 +46,7 @@ export const initXMLHttpRequest = (
         if (this.apiProxy.proxyContent.request.data && this.apiProxy.proxyContent.request.isOriginCatch !== true) {
           this.apiProxy.proxyContent.request.isOriginCatch = false;
           const self_body = await beforeXmlRequest(this.apiProxy.proxyContent, body);
+          console.log('[ApiProxy]: xml请求参数已被apiProxy代理');
           await originXmlHttpRequest.prototype.send.call(this, self_body);
         } else {
           this.apiProxy.proxyContent.request.isOriginCatch = true;
@@ -55,23 +57,26 @@ export const initXMLHttpRequest = (
           });
           await originXmlHttpRequest.prototype.send.call(this, body);
         }
-        if (
-          this.apiProxy.proxyContent.response.data &&
-          this.apiProxy.proxyContent.response.isOriginCatch !== true &&
-          this.responseType === 'json'
-        ) {
+        if (this.apiProxy.proxyContent.response.data && this.apiProxy.proxyContent.response.isOriginCatch !== true) {
           this.apiProxy.proxyContent.response.isOriginCatch = false;
           let self_response = await beforeXmlResponse(this.apiProxy.proxyContent);
-          self_response = JSON.parse(self_response);
+          console.log('[ApiProxy]: xml响应参数已被apiProxy代理');
+          try {
+            self_response = JSON.parse(self_response);
+          } catch (error) {}
           Object.defineProperty(this, 'response', {
+            get: () => self_response,
+            configurable: true,
+          });
+          Object.defineProperty(this, 'responseText', {
             get: () => self_response,
             configurable: true,
           });
         } else {
           this.addEventListener('readystatechange', () => {
             if (this.readyState === 4) {
-              if (this.apiProxy && this.responseType === 'json') {
-                this.apiProxy.proxyContent.response.data = JSON.stringify(this.response);
+              if (this.apiProxy) {
+                this.apiProxy.proxyContent.response.data = this.responseText === 'json' ? JSON.stringify(this.response) : this.response;
                 this.apiProxy.proxyContent.response.isOriginCatch = true;
                 this.sendMessageToContent('API_PROXY_INJECT_UPDATA', {
                   url: window.location.href,

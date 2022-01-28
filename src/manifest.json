@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ApiProxy",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "极简的API代理工具!",
   "background": {
     "service_worker": "libs/script/background.js",

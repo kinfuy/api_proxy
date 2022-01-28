@@ -16,10 +16,12 @@ const beforeFetchRequest = function (apiProxys: ApiProxy[], input: RequestInfo, 
         }
       });
       isMock = true;
+      console.log(`[ApiProxy]: 拦截到:${init?.method}  ${input}`);
     }
     if (isMock && apiProxy && init) {
       if ((apiProxy as ApiProxy).proxyContent.request.isOriginCatch !== true && (apiProxy as ApiProxy).proxyContent.request.data) {
         init.body = (apiProxy as ApiProxy).proxyContent.request.data;
+        console.log('[ApiProxy]: fetch请求参数已被apisProxy代理');
       } else {
         (apiProxy as ApiProxy).proxyContent.request.data = JSON.stringify(init.body);
         (apiProxy as ApiProxy).proxyContent.request.isOriginCatch === true;
@@ -75,6 +77,7 @@ export const initFetchProxy = (originFetch: typeof window.fetch, apiProxy: ApiPr
     const originResponse = await originFetch(requestConfig.input, requestConfig.init);
     if (requestConfig.apiProxy && requestConfig.isMock) {
       const response = await beforeFetchResponse(requestConfig.apiProxy, originResponse);
+      console.log('[ApiProxy]: fetch响应已被apisProxy代理');
       return response;
     }
     return originResponse;

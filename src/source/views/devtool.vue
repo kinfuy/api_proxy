@@ -210,6 +210,8 @@ export default defineComponent({
       if (item.isEdit) {
         if (backgroundConnect) {
           item.isEdit = false;
+          item.proxyContent.request.isOriginCatch = false;
+          item.proxyContent.response.isOriginCatch = false;
           backgroundConnect.postMessage({
             from: 'devtools',
             key: EVENT_KEY.API_PROXY_DEVTOOL_API_UPDATA,
