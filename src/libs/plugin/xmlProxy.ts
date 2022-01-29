@@ -61,22 +61,21 @@ export const initXMLHttpRequest = (
           this.apiProxy.proxyContent.response.isOriginCatch = false;
           let self_response = await beforeXmlResponse(this.apiProxy.proxyContent);
           console.log('[ApiProxy]: xml响应参数已被apiProxy代理');
-          try {
-            self_response = JSON.parse(self_response);
-          } catch (error) {}
           Object.defineProperty(this, 'response', {
-            get: () => self_response,
+            value: self_response,
+
             configurable: true,
           });
           Object.defineProperty(this, 'responseText', {
-            get: () => self_response,
+            value: self_response,
             configurable: true,
           });
+          console.log('🔥log=>xmlProxy=>74:response:%o', this.response);
         } else {
           this.addEventListener('readystatechange', () => {
             if (this.readyState === 4) {
               if (this.apiProxy) {
-                this.apiProxy.proxyContent.response.data = this.responseText === 'json' ? JSON.stringify(this.response) : this.response;
+                this.apiProxy.proxyContent.response.data = cloneDeep(this.response);
                 this.apiProxy.proxyContent.response.isOriginCatch = true;
                 this.sendMessageToContent('API_PROXY_INJECT_UPDATA', {
                   url: window.location.href,

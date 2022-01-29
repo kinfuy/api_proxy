@@ -95,7 +95,6 @@
 import { defineComponent, Ref, ref, onMounted, onUnmounted, computed } from 'vue';
 import { devToolInjectScriptResult } from './../../libs/chrome';
 import { EVENT_KEY } from './../../libs/config/const';
-import MOCK from 'mockjs';
 import { UUID } from '../../libs/utils';
 import { cloneDeep } from 'lodash';
 export default defineComponent({
@@ -130,12 +129,22 @@ export default defineComponent({
       switch (message.key) {
         case EVENT_KEY.API_PROXY_DEVTOOL_INIT: {
           webSite.value = cloneDeep(message.data.webSite);
-          apiProxy.value = cloneDeep(message.data.webSite);
+          message.data.apiProxy.forEach((x: ApiProxy) => {
+            if (typeof x.proxyContent.response.data === 'object' && x.proxyContent.response.data !== null) {
+              x.proxyContent.response.data = JSON.stringify(x.proxyContent.response.data);
+            }
+          });
+          apiProxy.value = cloneDeep(message.data.apiProxy);
           break;
         }
 
         case EVENT_KEY.API_PROXY_BACKGROUND_UPDATE: {
           webSite.value = cloneDeep(message.data.webSite);
+          message.data.apiProxy.forEach((x: ApiProxy) => {
+            if (typeof x.proxyContent.response.data === 'object' && x.proxyContent.response.data !== null) {
+              x.proxyContent.response.data = JSON.stringify(x.proxyContent.response.data);
+            }
+          });
           apiProxy.value = cloneDeep(message.data.apiProxy);
           break;
         }
@@ -195,13 +204,17 @@ export default defineComponent({
         item.isProxy = false;
         return;
       }
+      let apiProxy = cloneDeep(item);
+      try {
+        apiProxy.proxyContent.response.data = JSON.parse(apiProxy.proxyContent.response.data);
+      } catch (error) {}
       if (backgroundConnect) {
         backgroundConnect.postMessage({
           from: 'devtools',
           key: EVENT_KEY.API_PROXY_DEVTOOL_API_UPDATA,
           data: {
             webSite: webSite.value,
-            apiProxy: item,
+            apiProxy,
           },
         });
       }
@@ -212,12 +225,16 @@ export default defineComponent({
           item.isEdit = false;
           item.proxyContent.request.isOriginCatch = false;
           item.proxyContent.response.isOriginCatch = false;
+          let apiProxy = cloneDeep(item);
+          try {
+            apiProxy.proxyContent.response.data = JSON.parse(apiProxy.proxyContent.response.data);
+          } catch (error) {}
           backgroundConnect.postMessage({
             from: 'devtools',
             key: EVENT_KEY.API_PROXY_DEVTOOL_API_UPDATA,
             data: {
               webSite: webSite.value,
-              apiProxy: item,
+              apiProxy,
             },
           });
         }
