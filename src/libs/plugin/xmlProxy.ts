@@ -27,7 +27,7 @@ export const initXMLHttpRequest = (
       windowPostMessage(message);
     }
     async open(method: string, url: string | URL, async: boolean = true, username?: string | null, password?: string | null) {
-      if (apiProxy.some((x) => x.method === method && IsurlMatch(url.toString(), [x.url]))) {
+      if (apiProxy.some((x) => x.isProxy && x.method === method && IsurlMatch(url.toString(), [x.url]))) {
         apiProxy.forEach((x) => {
           if (x.method === method && IsurlMatch(url.toString(), [x.url])) {
             this.apiProxy = x; // 获取代理信息

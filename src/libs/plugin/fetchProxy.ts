@@ -9,7 +9,7 @@ const beforeFetchRequest = function (apiProxys: ApiProxy[], input: RequestInfo, 
   return new Promise((resolve, resject) => {
     let isMock = false;
     let apiProxy: ApiProxy | undefined = undefined;
-    if (apiProxys.some((x) => x.method === init?.method?.toLocaleUpperCase() && IsurlMatch(input.toString(), [x.url]))) {
+    if (apiProxys.some((x) => x.isProxy && x.method === init?.method?.toLocaleUpperCase() && IsurlMatch(input.toString(), [x.url]))) {
       apiProxys.forEach((x) => {
         if (x.method === init?.method?.toLocaleUpperCase() && IsurlMatch(input.toString(), [x.url])) {
           apiProxy = x; // 获取代理信息

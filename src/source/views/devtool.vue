@@ -36,11 +36,26 @@
         <div class="api-editor">
           <div class="api-editor-title">
             <span style="font-weight: 700">响应参数</span>
-            <div class="api-text text-edit">MOCK</div>
-            <div class="api-text text-edit">JSON</div>
+            <!-- <div class="api-text text-edit">MOCK</div> -->
+            <div
+              :class="['api-text', 'text-edit', { 'text-active': !item.proxyContent.response.showJson }]"
+              @click="item.proxyContent.response.showJson = false"
+            >
+              源数据
+            </div>
+            <div
+              :class="['api-text', 'text-edit', { 'text-active': item.proxyContent.response.showJson }]"
+              @click="item.proxyContent.response.showJson = true"
+            >
+              JSON
+            </div>
           </div>
           <div class="response-data">
+            <pre class="view-code-json" v-if="item.proxyContent.response.showJson">{{
+              JSON.stringify(JSON.parse(item.proxyContent.response.data), null, 2)
+            }}</pre>
             <el-input
+              v-else
               :autosize="{ minRows: 2, maxRows: 4 }"
               v-model="item.proxyContent.response.data"
               type="textarea"
@@ -50,7 +65,8 @@
           </div>
           <div class="api-editor-title">
             <span style="font-weight: 700">请求参数</span>
-            <div class="api-text text-edit">MOCK</div>
+            <!-- <div class="api-text text-edit">MOCK</div> -->
+            <div class="api-text text-edit text-active">源数据</div>
             <div class="api-text text-edit">JSON</div>
           </div>
           <div class="request-data">
@@ -92,7 +108,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, Ref, ref, onMounted, onUnmounted, computed } from 'vue';
+import { defineComponent, Ref, ref, onMounted, onUnmounted } from 'vue';
 import { devToolInjectScriptResult } from './../../libs/chrome';
 import { EVENT_KEY } from './../../libs/config/const';
 import { UUID } from '../../libs/utils';
@@ -112,7 +128,9 @@ export default defineComponent({
     const initDevtool = async () => {
       if (backgroundConnect) return;
       // 与后台页面消息通信-长连接
-      const port = chrome.runtime.connect(chrome.runtime.id, { name: 'devtools' });
+      const port = chrome.runtime.connect(chrome.runtime.id, {
+        name: 'devtools',
+      });
       // 往后台页面发送消息
       const url = await devToolInjectScriptResult(`window.location.href`);
       if (url && chrome.devtools.inspectedWindow.tabId) {
@@ -256,7 +274,17 @@ export default defineComponent({
     const stopPropagation = (e: Event) => {
       e.stopPropagation();
     };
-    return { webSite, apiProxy, handleChange, handleApiProxyAdd, handleEdit, handleDelete, activeName, stopPropagation, handleAPiChange };
+    return {
+      webSite,
+      apiProxy,
+      handleChange,
+      handleApiProxyAdd,
+      handleEdit,
+      handleDelete,
+      activeName,
+      stopPropagation,
+      handleAPiChange,
+    };
   },
 });
 </script>
@@ -330,5 +358,17 @@ export default defineComponent({
   &:hover {
     color: #409eff;
   }
+  &.text-active {
+    color: #409eff;
+  }
+}
+.view-code-json {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  max-height: 300px;
+  padding: 20px;
+  background-color: #333;
+  color: #fff;
 }
 </style>
