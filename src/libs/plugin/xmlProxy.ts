@@ -70,7 +70,10 @@ export const initXMLHttpRequest = (
             value: self_response,
             configurable: true,
           });
-          console.log('🔥log=>xmlProxy=>74:response:%o', this.response);
+          Object.defineProperty(this, 'status', {
+            value: 200,
+            configurable: true,
+          }); // 当存在代理时，将http状态码更改为200
         } else {
           this.addEventListener('readystatechange', () => {
             if (this.readyState === 4) {

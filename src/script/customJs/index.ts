@@ -50,7 +50,6 @@ addEventListener(window, 'message', (info: any) => {
     case EVENT_KEY.API_PROXY_BACKGROUND_UPDATE: {
       // 监听到背景页通知需要更新代理信息
       // 重新初始化xml fetch
-      console.log('🔥log=>index=>53:message:%o', message);
       const { beforeXmlOpen, beforeXmlRequest, beforeXmlResponse } = createHooks(message.data.webSite, message.data.apiProxy);
       initProxy(message.data.webSite, message.data.apiProxy, beforeXmlOpen, beforeXmlRequest, beforeXmlResponse);
       break;
