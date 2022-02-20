@@ -43,17 +43,20 @@
             >
               源数据
             </div>
-            <div
-              :class="['api-text', 'text-edit', { 'text-active': item.proxyContent.response.showJson }]"
-              @click="item.proxyContent.response.showJson = true"
-            >
+            <div :class="['api-text', 'text-edit', { 'text-active': item.proxyContent.response.showJson }]" @click="handleShowJson(item)">
               JSON
             </div>
           </div>
           <div class="response-data">
-            <pre class="view-code-json" v-if="item.proxyContent.response.showJson">{{
-              JSON.stringify(JSON.parse(item.proxyContent.response.data), null, 2)
-            }}</pre>
+            <JsonEditor
+              v-if="item.proxyContent.response.showJson"
+              :json="JsonEditorData"
+              :config="jsonConfig"
+              :disabled="!item.isEdit"
+              :extend-all="false"
+              @change="handleJsonEditorChange($event, item)"
+              :extend-level="1"
+            ></JsonEditor>
             <el-input
               v-else
               :autosize="{ minRows: 2, maxRows: 4 }"
@@ -113,8 +116,10 @@ import { devToolInjectScriptResult } from './../../libs/chrome';
 import { EVENT_KEY } from './../../libs/config/const';
 import { UUID } from '../../libs/utils';
 import { cloneDeep } from 'lodash';
+import JsonEditor from './../componnets/JsonEditor/JsonEditor.vue';
 export default defineComponent({
   name: 'Devtool',
+  components: { JsonEditor },
   setup() {
     const webSite: Ref<WebSite> = ref({
       id: '',
@@ -274,6 +279,28 @@ export default defineComponent({
     const stopPropagation = (e: Event) => {
       e.stopPropagation();
     };
+
+    // json 视图
+    const jsonConfig = {
+      keyColor: {
+        string: '#548CFF',
+        number: '#333',
+        array: '#FF9F45',
+        object: '#139487',
+        boolean: '#66806A',
+      },
+      addType: true,
+    };
+    const JsonEditorData = ref();
+    const handleJsonEditorChange = (val: string, item: ApiProxy) => {
+      item.proxyContent.response.data = val;
+      JsonEditorData.value = val;
+    };
+
+    const handleShowJson = (item: ApiProxy) => {
+      JsonEditorData.value = item.proxyContent.response.data;
+      item.proxyContent.response.showJson = true;
+    };
     return {
       webSite,
       apiProxy,
@@ -284,6 +311,10 @@ export default defineComponent({
       activeName,
       stopPropagation,
       handleAPiChange,
+      handleJsonEditorChange,
+      handleShowJson,
+      JsonEditorData,
+      jsonConfig,
     };
   },
 });

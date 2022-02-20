@@ -9,6 +9,7 @@ import router from './router/devtool';
 import App from './App.vue';
 import IconSvg from './componnets/Icon';
 import './assets/icons/iconfont.js';
+import './componnets/JsonEditor/components/Icon/iconfont.js';
 import CommonDirective from './directive';
 const app = createApp(App);
 
