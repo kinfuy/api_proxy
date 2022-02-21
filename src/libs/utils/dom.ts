@@ -32,3 +32,14 @@ export const addEventListener = (
 export const windowPostMessage = (EventMessage: PostMessage, url: string = '*') => {
   window.postMessage(EventMessage, url);
 };
+
+/**
+ * url参数提取
+ * @returns
+ */
+export const getQueryString = (url: string) => {
+  // 定义返回结果
+  if (url.lastIndexOf('?') !== -1) {
+    return url.slice(url.lastIndexOf('?') + 1);
+  }
+};

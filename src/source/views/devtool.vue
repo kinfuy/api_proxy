@@ -68,7 +68,6 @@
           </div>
           <div class="api-editor-title">
             <span style="font-weight: 700">请求参数</span>
-            <!-- <div class="api-text text-edit">MOCK</div> -->
             <div class="api-text text-edit text-active">源数据</div>
             <div class="api-text text-edit">JSON</div>
           </div>
@@ -81,7 +80,7 @@
               placeholder="开启代理后会默认缓存真实请求参数，缓存参数不会进行拦截"
             />
           </div>
-          <!-- <div class="api-editor-title">
+          <div class="api-editor-title">
             <span style="font-weight: 700">请求头</span>
           </div>
           <div class="request-data">
@@ -89,8 +88,8 @@
               :autosize="{ minRows: 1, maxRows: 2 }"
               v-model="item.proxyContent.request.header"
               type="textarea"
-              :disabled="true"
-              placeholder="开启代理后会默认缓存真实请求参数，缓存参数不会进行拦截"
+              :disabled="!item.isEdit"
+              placeholder="追加请求头,多个用英文逗号分割"
             />
           </div>
           <div class="api-editor-title">
@@ -104,7 +103,7 @@
               :disabled="true"
               placeholder="开启代理后会默认缓存真实响应参数，缓存参数不会进行拦截"
             />
-          </div> -->
+          </div>
         </div>
       </el-collapse-item>
     </el-collapse>
@@ -112,11 +111,12 @@
 </template>
 <script lang="ts">
 import { defineComponent, Ref, ref, onMounted, onUnmounted } from 'vue';
-import { devToolInjectScriptResult } from './../../libs/chrome';
+import { devToolInjectScriptResult, chromeAddListenerMessage } from './../../libs/chrome';
 import { EVENT_KEY } from './../../libs/config/const';
 import { UUID } from '../../libs/utils';
 import { cloneDeep } from 'lodash';
 import JsonEditor from './../componnets/JsonEditor/JsonEditor.vue';
+import { ElLoading } from 'element-plus';
 export default defineComponent({
   name: 'Devtool',
   components: { JsonEditor },
@@ -147,28 +147,35 @@ export default defineComponent({
       }
       return port;
     };
+    const devToolUpdata = (message: PostMessage) => {
+      webSite.value = cloneDeep(message.data.webSite);
+      message.data.apiProxy.forEach((x: ApiProxy) => {
+        if (typeof x.proxyContent.response.data === 'object' && x.proxyContent.response.data !== null) {
+          x.proxyContent.response.data = JSON.stringify(x.proxyContent.response.data);
+        }
+      });
+      apiProxy.value = cloneDeep(message.data.apiProxy);
+    };
     const addListenerHandler = (message: PostMessage) => {
       if (message.from !== 'background') return;
       switch (message.key) {
         case EVENT_KEY.API_PROXY_DEVTOOL_INIT: {
-          webSite.value = cloneDeep(message.data.webSite);
-          message.data.apiProxy.forEach((x: ApiProxy) => {
-            if (typeof x.proxyContent.response.data === 'object' && x.proxyContent.response.data !== null) {
-              x.proxyContent.response.data = JSON.stringify(x.proxyContent.response.data);
-            }
-          });
-          apiProxy.value = cloneDeep(message.data.apiProxy);
+          devToolUpdata(message);
           break;
         }
-
-        case EVENT_KEY.API_PROXY_BACKGROUND_UPDATE: {
-          webSite.value = cloneDeep(message.data.webSite);
-          message.data.apiProxy.forEach((x: ApiProxy) => {
-            if (typeof x.proxyContent.response.data === 'object' && x.proxyContent.response.data !== null) {
-              x.proxyContent.response.data = JSON.stringify(x.proxyContent.response.data);
-            }
+        case EVENT_KEY.API_PROXY_INJECT_INIT: {
+          const loading = ElLoading.service({
+            lock: true,
+            text: 'apiProxy重载中',
           });
-          apiProxy.value = cloneDeep(message.data.apiProxy);
+          setTimeout(() => {
+            loading.close();
+          }, 500);
+          devToolUpdata(message);
+          break;
+        }
+        case EVENT_KEY.API_PROXY_BACKGROUND_UPDATE: {
+          devToolUpdata(message);
           break;
         }
 
@@ -176,7 +183,9 @@ export default defineComponent({
           break;
       }
     };
+
     onMounted(async () => {
+      chromeAddListenerMessage(addListenerHandler);
       backgroundConnect = await initDevtool();
       if (backgroundConnect) backgroundConnect.onMessage.addListener(addListenerHandler);
     });
@@ -275,7 +284,6 @@ export default defineComponent({
         });
       }
     };
-
     const stopPropagation = (e: Event) => {
       e.stopPropagation();
     };

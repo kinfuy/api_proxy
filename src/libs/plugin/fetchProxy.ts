@@ -1,6 +1,7 @@
 import cloneDeep from 'lodash.clonedeep';
 import { EventKey } from '../config/const';
 import { createStream, windowPostMessage, IsurlMatch } from './../utils';
+import { getQueryString } from './../utils/dom';
 const sendMessageToContent = (key: EventKey, data: any) => {
   const message: PostMessage = { from: 'inject_script', key, data };
   windowPostMessage(message);
@@ -13,17 +14,28 @@ const beforeFetchRequest = function (apiProxys: ApiProxy[], input: RequestInfo, 
       apiProxys.forEach((x) => {
         if (x.method === init?.method?.toLocaleUpperCase() && IsurlMatch(input.toString(), [x.url])) {
           apiProxy = x; // 获取代理信息
+          console.log('🔥log=>fetchProxy=>24:init:%o', init);
         }
       });
       isMock = true;
       console.log(`[ApiProxy]: 拦截到:${init?.method}  ${input}`);
     }
+
     if (isMock && apiProxy && init) {
+      const headers = this.apiProxy?.proxyContent.request.header.replace(/^"|"$/g, '').split(',');
+      headers.forEach((x: string) => {
+        const item = x.split(':');
+        if (init.headers) (init.headers as Record<string, any>)[item[0] as string] = item[1];
+        console.log(`[ApiProxy]: 已添加请求头: ${item[0]}:${item[1]}`);
+      });
+
       if ((apiProxy as ApiProxy).proxyContent.request.isOriginCatch !== true && (apiProxy as ApiProxy).proxyContent.request.data) {
-        init.body = (apiProxy as ApiProxy).proxyContent.request.data;
+        if (init?.method === 'get') input = `${input}?${(apiProxy as ApiProxy).proxyContent.request.data}`;
+        if (init?.method === 'post') init.body = (apiProxy as ApiProxy).proxyContent.request.data;
         console.log('[ApiProxy]: fetch请求参数已被apisProxy代理');
       } else {
-        (apiProxy as ApiProxy).proxyContent.request.data = JSON.stringify(init.body);
+        if (init?.method === 'get') (apiProxy as ApiProxy).proxyContent.request.data = getQueryString(input.toString());
+        if (init?.method === 'post') (apiProxy as ApiProxy).proxyContent.request.data = JSON.stringify(init.body);
         (apiProxy as ApiProxy).proxyContent.request.isOriginCatch === true;
         sendMessageToContent('API_PROXY_INJECT_UPDATA', {
           url: window.location.href,

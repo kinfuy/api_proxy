@@ -37,7 +37,6 @@ addEventListener(window, 'message', (info: any) => {
 document.onreadystatechange = async function () {
   if (document.readyState === 'interactive') {
     await injectCustomJs('libs/script/customJs.js');
-    console.log(getChromeUrl('/libs/script/devtoolView.html'));
   }
   if (document.readyState === 'complete') {
     await sendMessageToExtension({

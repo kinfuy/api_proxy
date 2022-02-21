@@ -40,6 +40,18 @@ export const initXMLHttpRequest = (
       this.proxyUrl = openQuery.url;
       this.proxyMethod = openQuery.method;
       await originXmlHttpRequest.prototype.open.apply(this, [openQuery.method, openQuery.url, async, username, password]);
+      if (this.apiProxy?.proxyContent.request.header) {
+        try {
+          const headers = this.apiProxy?.proxyContent.request.header.replace(/^"|"$/g, '').split(',');
+          headers.forEach((x: string) => {
+            const item = x.split(':');
+            this.setRequestHeader(item[0], item[1]);
+            console.log(`[ApiProxy]: 已添加请求头: ${item[0]}:${item[1]}`);
+          });
+        } catch (error) {
+          console.log(`[ApiProxy]: ${error}`);
+        }
+      }
     }
     async send(body?: Document | XMLHttpRequestBodyInit | null) {
       if (this.isMock && this.apiProxy) {
@@ -80,6 +92,7 @@ export const initXMLHttpRequest = (
               if (this.apiProxy) {
                 this.apiProxy.proxyContent.response.data = cloneDeep(this.response);
                 this.apiProxy.proxyContent.response.isOriginCatch = true;
+                this.apiProxy.proxyContent.response.header = this.getAllResponseHeaders();
                 this.sendMessageToContent('API_PROXY_INJECT_UPDATA', {
                   url: window.location.href,
                   apiProxy: cloneDeep(this.apiProxy),
