@@ -4,6 +4,11 @@
 
 背景：不想写 mock，mock 语法老忘记！并不需要多真实的数据，只需要一个模板数据，简单更改，所以写了这个插件！前端时间看见有人分享了 Ajax Interceptor 的 chrome 插件，就想着自己也可以写一个试试，就做了这个插件
 
+## 使用
+
+- 该插件未发布至谷歌商店，可以直接下载 version 文件夹里的最新版本，解压安装即可
+- 也可自行 fork 源码 build
+
 ## demo
 
 ![juejin](./template/juejin1.png)
