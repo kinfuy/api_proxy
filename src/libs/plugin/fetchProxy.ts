@@ -22,11 +22,14 @@ const beforeFetchRequest = function (apiProxys: ApiProxy[], input: RequestInfo, 
     }
 
     if (isMock && apiProxy && init) {
-      const headers = this.apiProxy?.proxyContent.request.header.replace(/^"|"$/g, '').split(',');
+      const headers = (apiProxy as ApiProxy).proxyContent.request.header.replace(/^"|"$/g, '').split(',') || [];
+      console.log('🔥log=>fetchProxy=>26:headers:%o', headers);
       headers.forEach((x: string) => {
         const item = x.split(':');
-        if (init.headers) (init.headers as Record<string, any>)[item[0] as string] = item[1];
-        console.log(`[ApiProxy]: 已添加请求头: ${item[0]}:${item[1]}`);
+        if (item[0] && item[0] !== '') {
+          if (init.headers) (init.headers as Record<string, any>)[item[0] as string] = item[1];
+          console.log(`[ApiProxy]: 已添加请求头: ${item[0]}:${item[1]}`);
+        }
       });
 
       if ((apiProxy as ApiProxy).proxyContent.request.isOriginCatch !== true && (apiProxy as ApiProxy).proxyContent.request.data) {

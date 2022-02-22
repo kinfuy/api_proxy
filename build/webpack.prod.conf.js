@@ -87,7 +87,7 @@ module.exports = merge(webapckBaseConfig, {
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, './../src/views/popupView.html'),
       filename: '../views/popupView.html',
-      chunks: ['popuplView'],
+      chunks: ['popupView'],
     }),
     new CompressPlugin({
       fileName: `ApiProxy-V${pkg.version}.zip`,
