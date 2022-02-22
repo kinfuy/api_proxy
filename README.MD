@@ -1,4 +1,4 @@
-# ApiPrxoy
+# ApiProxy
 
 极简的 API 代理工具!
 
