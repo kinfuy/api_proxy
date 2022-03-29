@@ -2,7 +2,6 @@
 import { initFetchProxy, initXMLHttpRequest } from './../../libs/plugin/proxy';
 import { addEventListener, IsurlMatch } from '../../libs/utils';
 import { EVENT_KEY } from '../../libs/config/const';
-import cloneDeep from 'lodash.clonedeep';
 const originXMLHttpRequest = window.XMLHttpRequest;
 const originFetch = window.fetch;
 

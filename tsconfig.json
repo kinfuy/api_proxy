@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "ESNext",
     "noImplicitThis": false,
     "declaration": false,
     "removeComments": true,
@@ -10,7 +10,7 @@
     "jsxFactory": "h",
     "jsxFragmentFactory": "Fragment",
     "noLib": false,
-    "target": "es6",
+    "target": "ESNext",
     "sourceMap": true,
     "strict": true,
     "suppressExcessPropertyErrors": true,

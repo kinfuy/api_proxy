@@ -1,4 +1,4 @@
-import 'babel-polyfill';
+// import 'babel-polyfill';
 import { injectCustomJs, getChromeUrl, sendMessageToExtension, chromeAddListenerMessage } from '../../libs/chrome';
 import { EVENT_KEY } from '../../libs/config/const';
 import { addEventListener, windowPostMessage } from '../../libs/utils';
