@@ -69,7 +69,7 @@
           <div class="api-editor-title">
             <span style="font-weight: 700">请求参数</span>
             <div class="api-text text-edit text-active">源数据</div>
-            <div class="api-text text-edit">JSON</div>
+            <!-- <div class="api-text text-edit">JSON</div> -->
           </div>
           <div class="request-data">
             <el-input

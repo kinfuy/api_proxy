@@ -14,7 +14,6 @@ const beforeFetchRequest = function (apiProxys: ApiProxy[], input: RequestInfo, 
       apiProxys.forEach((x) => {
         if (x.method === init?.method?.toLocaleUpperCase() && IsurlMatch(input.toString(), [x.url])) {
           apiProxy = x; // 获取代理信息
-          console.log('🔥log=>fetchProxy=>24:init:%o', init);
         }
       });
       isMock = true;
@@ -23,7 +22,6 @@ const beforeFetchRequest = function (apiProxys: ApiProxy[], input: RequestInfo, 
 
     if (isMock && apiProxy && init) {
       const headers = (apiProxy as ApiProxy).proxyContent.request.header.replace(/^"|"$/g, '').split(',') || [];
-      console.log('🔥log=>fetchProxy=>26:headers:%o', headers);
       headers.forEach((x: string) => {
         const item = x.split(':');
         if (item[0] && item[0] !== '') {

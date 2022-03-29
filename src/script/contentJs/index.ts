@@ -14,6 +14,14 @@ chromeAddListenerMessage((message: PostMessage) => {
       });
       break;
     }
+    case EVENT_KEY.API_PROXY_INJECT_INIT: {
+      windowPostMessage({
+        from: 'content_script',
+        key: EVENT_KEY.API_PROXY_INJECT_INIT,
+        data: message.data,
+      });
+      break;
+    }
     default:
       break;
   }

@@ -105,7 +105,6 @@ export const updateProxy = async (message: PostMessage) => {
       apiProxyStore = [message.data.apiProxy];
     }
   }
-  console.log('🔥log=>devtool=>108:apiProxyStore:%o', apiProxyStore);
   await setStore({ apiProxyStore: cloneDeep(apiProxyStore) });
 };
 /**

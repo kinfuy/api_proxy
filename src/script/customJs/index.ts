@@ -1,4 +1,4 @@
-import 'babel-polyfill';
+// import 'babel-polyfill';
 import { initFetchProxy, initXMLHttpRequest } from './../../libs/plugin/proxy';
 import { addEventListener, IsurlMatch } from '../../libs/utils';
 import { EVENT_KEY } from '../../libs/config/const';
@@ -48,6 +48,14 @@ addEventListener(window, 'message', (info: any) => {
   if (message.from !== 'content_script') return;
   switch (message.key) {
     case EVENT_KEY.API_PROXY_BACKGROUND_UPDATE: {
+      console.log('[ApiProxy]: 已重载');
+      // 监听到背景页通知需要更新代理信息
+      // 重新初始化xml fetch
+      const { beforeXmlOpen, beforeXmlRequest, beforeXmlResponse } = createHooks(message.data.webSite, message.data.apiProxy);
+      initProxy(message.data.webSite, message.data.apiProxy, beforeXmlOpen, beforeXmlRequest, beforeXmlResponse);
+      break;
+    }
+    case EVENT_KEY.API_PROXY_INJECT_INIT: {
       console.log('[ApiProxy]: 已重载');
       // 监听到背景页通知需要更新代理信息
       // 重新初始化xml fetch

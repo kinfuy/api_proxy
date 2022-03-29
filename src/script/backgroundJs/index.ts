@@ -7,7 +7,6 @@ chromeAddListenerMessage(async (message) => {
   if (message.from !== 'content_script') return;
   switch (message.key) {
     case EVENT_KEY.API_PROXY_INJECT_INIT: {
-      console.log('🔥log=>index=>10:API_PROXY_INJECT_INIT:%o', '刷新');
       let path = new URL(message.data.url);
       const proxy = await getUrlProxyInfo(path.hostname);
       if (proxy) await noticeApiPrxoxyUpdata(EVENT_KEY.API_PROXY_INJECT_INIT, proxy.webSite, proxy.apiProxy);
@@ -78,7 +77,7 @@ function noticeApiPrxoxyUpdata(eventKey: string, webSite: WebSite, apiProxy: Api
     },
   };
   sendMessageToContentScript(message);
-  sendMessageToExtension(message);
+  // sendMessageToExtension(message);
   if (devToolPort) {
     devToolPort.postMessage(message);
   } else {
