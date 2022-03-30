@@ -1,5 +1,4 @@
 // 只能访问 devtools、extension、runtime等部分API
-import 'babel-polyfill';
 import { createApp } from 'vue';
 import ElementPlus from 'element-plus';
 import 'style-loader!css-loader!element-plus/dist/index.css';

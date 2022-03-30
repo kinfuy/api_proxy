@@ -1,5 +1,4 @@
 // 只能访问 devtools、extension、runtime等部分API
-import 'babel-polyfill';
 import { createDevtoolsanels } from './../libs/chrome';
 createDevtoolsanels();
 import { createApp } from 'vue';

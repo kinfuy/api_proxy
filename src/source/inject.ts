@@ -1,4 +1,3 @@
-import 'babel-polyfill';
 import { createApp } from 'vue';
 import router from './router/inject';
 import App from './App.vue';

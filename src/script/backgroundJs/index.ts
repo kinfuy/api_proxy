@@ -1,4 +1,3 @@
-// import 'babel-polyfill';
 import { EventKey, EVENT_KEY } from '../../libs/config/const';
 import { proxySwitch, getUrlProxyInfo, updateProxy, deleteProxy } from './devtool';
 import { chromeAddListenerMessage, sendMessageToContentScript, sendMessageToExtension } from '../../libs/chrome';
