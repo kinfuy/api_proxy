@@ -1,0 +1,21 @@
+{
+  "extends": [
+    "stylelint-config-standard",
+    "stylelint-config-html/vue",
+    "stylelint-config-prettier",
+    "stylelint-config-recommended-vue",
+    "stylelint-config-recommended-less"
+  ],
+  "customSyntax": "postcss-html",
+  "rules": {
+    "rule-empty-line-before": null,
+    "no-empty-source": null,
+    "no-eol-whitespace": null,
+    "selector-combinator-space-before": null,
+    "selector-combinator-space-after": null,
+    "declaration-bang-space-before": null,
+    "no-descending-specificity": null,
+    "font-family-no-missing-generic-family-keyword": null
+  },
+  "defaultSeverity": "error"
+}

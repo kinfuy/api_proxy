@@ -1,21 +1,25 @@
 {
   "compilerOptions": {
+    "target": "ESNext",
     "module": "ESNext",
-    "noImplicitThis": false,
-    "declaration": false,
-    "removeComments": true,
-    "moduleResolution": "node",
-    "esModuleInterop": true,
+    "strict": true,
     "jsx": "preserve",
     "jsxFactory": "h",
     "jsxFragmentFactory": "Fragment",
-    "noLib": false,
-    "target": "ESNext",
-    "sourceMap": true,
-    "strict": true,
-    "suppressExcessPropertyErrors": true,
-    "lib": ["esnext", "dom"]
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "dist",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "typings/*.d.ts", "src/libs/plugin/xmlProxy.js"],
+  "include": [
+    "package/**/*.ts",
+    "package/**/*.d.ts",
+    "package/**/*.tsx",
+    "package/**/*.vue",
+    "typings/*.d.ts"
+  ],
   "exclude": ["node_modules"]
 }
+

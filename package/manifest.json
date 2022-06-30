@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "ApiProxy",
+  "version": "1.0.0",
+  "description": "极简的API代理工具!",
+  "background": {
+    "service_worker": "script/background.js"
+  },
+  "content_security_policy": {},
+  "action": {
+    "default_icon": "assets/logo.png",
+    "default_title": "极简的API代理工具!",
+    "default_popup": "popup/index.html"
+  },
+  "icons": {
+    "16": "assets/logo.png",
+    "48": "assets/logo.png",
+    "128": "assets/logo.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["script/content.js"],
+      "css": ["style/common.css"],
+      "run_at": "document_start"
+    }
+  ],
+  "devtools_page": "devtool/index.html",
+  "web_accessible_resources": [
+    {
+      "resources": ["script/custom.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "permissions": ["contextMenus", "storage", "notifications"],
+  "optional_permissions": [],
+  "host_permissions": ["http://*/*", "https://*/*"]
+}

@@ -1,0 +1,10 @@
+*.js
+*.png
+*.eot
+*.ttf
+*.woff
+/src/assets/
+/business
+*.puml
+*.md
+/report_pdf_ssr_template

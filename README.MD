@@ -1,22 +1,29 @@
-# ApiProxy
+<p align="center">
+  <img width="100px" src="./package/assets/logo.png">
+</p>
 
-极简的 API 代理工具!
+<p align="center">
+   <a href="https://github.com/alqmc/api_proxy" target="__blank"><img alt="GitHub stars" src="https://img.shields.io/github/stars/alqmc/api_proxy?style=social">
 
-背景：不想写 mock，mock 语法老忘记！并不需要多真实的数据，只需要一个模板数据，简单更改，所以写了这个插件！前段时间看见有人分享了 Ajax Interceptor 的 chrome 插件，就想着自己也可以写一个试试，就做了这个插件
+  </a>
+
+  <br>
+</p>
+
+<p align="center">ApiProxy</p>
+
+## 背景
+
+不想写 mock，mock 语法老忘记！并不需要多真实的数据，只需要一个模板数据，简单更改，所以写了这个插件！前段时间看见有人分享了 Ajax Interceptor 的 chrome 插件，就想着自己也可以写一个试试，就做了这个插件
 
 ## 使用
 
 - 该插件未发布至谷歌商店，可以直接下载 version 文件夹里的最新版本，解压安装即可
 - 也可自行 fork 源码 build
 
-## demo
+### 功能预览
 
-![juejin](./template/juejin1.png)
-![juejin](./template/juejin2.png)
-![juejin](./template/juejin3.png)
-
-## 请求拦截
-
+- 极简的 API 代理工具!
 - 拦截 fetch 请求
 - 拦截 xmrhttprequest 请求
 - 请求参数可配置
@@ -34,7 +41,7 @@
 
 - 重写 fetch 和 XMLHttpRequest 对象
 
-参考
+### License
 
-- [Ajax Interceptor](https://github.com/YGYOOO/ajax-interceptor)
-- [Mock](https://github.com/nuysoft/Mock)
+MIT License © 2021 [阿乐去买菜（alqmc）](https://github.com/alqmc)
+
