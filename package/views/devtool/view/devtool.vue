@@ -155,8 +155,8 @@
     </el-collapse>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent, onMounted, onUnmounted, ref } from 'vue';
+<script lang="ts" setup>
+import { onMounted, onUnmounted, ref } from 'vue';
 import cloneDeep from 'lodash.clonedeep';
 
 import { ElLoading } from 'element-plus';
@@ -167,224 +167,204 @@ import {
 } from '../../../libs/chrome';
 import { EVENT_KEY } from '../../../libs/config/const';
 import type { Ref } from 'vue';
-export default defineComponent({
-  name: 'Devtool',
-  setup() {
-    const webSite: Ref<WebSite> = ref({
-      id: '',
-      url: '',
-      storeKey: '',
-      isProxy: false,
+const webSite: Ref<WebSite> = ref({
+  id: '',
+  url: '',
+  storeKey: '',
+  isProxy: false,
+});
+const apiProxy: Ref<ApiProxy[]> = ref([]);
+const activeName = ref('');
+let backgroundConnect: undefined | chrome.runtime.Port = undefined;
+const initDevtool = async () => {
+  if (backgroundConnect) return;
+  // 与后台页面消息通信-长连接
+  const port = chrome.runtime.connect(chrome.runtime.id, {
+    name: 'devtools',
+  });
+  // 往后台页面发送消息
+  const url = await devToolInjectScriptResult(`window.location.href`);
+  if (url && chrome.devtools.inspectedWindow.tabId) {
+    port.postMessage({
+      from: 'devtools',
+      key: EVENT_KEY.API_PROXY_DEVTOOL_INIT,
+      data: { url },
     });
-    const apiProxy: Ref<ApiProxy[]> = ref([]);
-    const activeName = ref('');
-    let backgroundConnect: undefined | chrome.runtime.Port = undefined;
-    const initDevtool = async () => {
-      if (backgroundConnect) return;
-      // 与后台页面消息通信-长连接
-      const port = chrome.runtime.connect(chrome.runtime.id, {
-        name: 'devtools',
+  }
+  return port;
+};
+const devToolUpdata = (message: PostMessage) => {
+  webSite.value = cloneDeep(message.data.webSite);
+  message.data.apiProxy.forEach((x: ApiProxy) => {
+    if (
+      typeof x.proxyContent.response.data === 'object' &&
+      x.proxyContent.response.data !== null
+    ) {
+      x.proxyContent.response.data = JSON.stringify(
+        x.proxyContent.response.data
+      );
+    }
+  });
+  apiProxy.value = cloneDeep(message.data.apiProxy);
+};
+const addListenerHandler = (message: PostMessage) => {
+  if (message.from !== 'background') return;
+  switch (message.key) {
+    case EVENT_KEY.API_PROXY_DEVTOOL_INIT: {
+      devToolUpdata(message);
+      break;
+    }
+    case EVENT_KEY.API_PROXY_INJECT_INIT: {
+      const loading = ElLoading.service({
+        lock: true,
+        text: 'apiProxy重载中',
       });
-      // 往后台页面发送消息
-      const url = await devToolInjectScriptResult(`window.location.href`);
-      if (url && chrome.devtools.inspectedWindow.tabId) {
-        port.postMessage({
-          from: 'devtools',
-          key: EVENT_KEY.API_PROXY_DEVTOOL_INIT,
-          data: { url },
-        });
-      }
-      return port;
-    };
-    const devToolUpdata = (message: PostMessage) => {
-      webSite.value = cloneDeep(message.data.webSite);
-      message.data.apiProxy.forEach((x: ApiProxy) => {
-        if (
-          typeof x.proxyContent.response.data === 'object' &&
-          x.proxyContent.response.data !== null
-        ) {
-          x.proxyContent.response.data = JSON.stringify(
-            x.proxyContent.response.data
-          );
-        }
-      });
-      apiProxy.value = cloneDeep(message.data.apiProxy);
-    };
-    const addListenerHandler = (message: PostMessage) => {
-      if (message.from !== 'background') return;
-      switch (message.key) {
-        case EVENT_KEY.API_PROXY_DEVTOOL_INIT: {
-          devToolUpdata(message);
-          break;
-        }
-        case EVENT_KEY.API_PROXY_INJECT_INIT: {
-          const loading = ElLoading.service({
-            lock: true,
-            text: 'apiProxy重载中',
-          });
-          setTimeout(() => {
-            loading.close();
-          }, 500);
-          devToolUpdata(message);
-          break;
-        }
-        case EVENT_KEY.API_PROXY_BACKGROUND_UPDATE: {
-          devToolUpdata(message);
-          break;
-        }
+      setTimeout(() => {
+        loading.close();
+      }, 500);
+      devToolUpdata(message);
+      break;
+    }
+    case EVENT_KEY.API_PROXY_BACKGROUND_UPDATE: {
+      devToolUpdata(message);
+      break;
+    }
 
-        default:
-          break;
-      }
-    };
+    default:
+      break;
+  }
+};
 
-    onMounted(async () => {
-      chromeAddListenerMessage(addListenerHandler);
-      backgroundConnect = await initDevtool();
-      if (backgroundConnect)
-        backgroundConnect.onMessage.addListener(addListenerHandler);
+onMounted(async () => {
+  chromeAddListenerMessage(addListenerHandler);
+  backgroundConnect = await initDevtool();
+  if (backgroundConnect)
+    backgroundConnect.onMessage.addListener(addListenerHandler);
+});
+onUnmounted(() => {
+  if (backgroundConnect) {
+    backgroundConnect.disconnect();
+    backgroundConnect = undefined;
+  }
+});
+const handleChange = async () => {
+  const url = await devToolInjectScriptResult(`window.location.href`);
+  if (backgroundConnect)
+    backgroundConnect.postMessage({
+      from: 'devtools',
+      key: EVENT_KEY.API_PROXY_DEVTOOL_WEBSITE_UPDATA,
+      data: { url, webSite: webSite.value },
     });
-    onUnmounted(() => {
-      if (backgroundConnect) {
-        backgroundConnect.disconnect();
-        backgroundConnect = undefined;
-      }
-    });
-    const handleChange = async () => {
-      const url = await devToolInjectScriptResult(`window.location.href`);
-      if (backgroundConnect)
-        backgroundConnect.postMessage({
-          from: 'devtools',
-          key: EVENT_KEY.API_PROXY_DEVTOOL_WEBSITE_UPDATA,
-          data: { url, webSite: webSite.value },
-        });
-    };
+};
 
-    const handleApiProxyAdd = () => {
-      apiProxy.value.push({
-        id: UUID(),
-        name: webSite.value.storeKey,
-        url: '',
-        isProxy: false,
-        method: 'GET',
-        isEdit: true,
-        proxyContent: {
-          request: {
-            isOriginCatch: false,
-            showJson: false,
-            showMock: false,
-            data: '',
-            header: '',
-          },
-          response: {
-            isOriginCatch: false,
-            showJson: false,
-            showMock: false,
-            data: '',
-            header: '',
-          },
-        },
-      });
-    };
-    const handleAPiChange = (item: ApiProxy) => {
-      if (item.isEdit) {
-        item.isProxy = false;
-        return;
-      }
+const handleApiProxyAdd = () => {
+  apiProxy.value.push({
+    id: UUID(),
+    name: webSite.value.storeKey,
+    url: '',
+    isProxy: false,
+    method: 'GET',
+    isEdit: true,
+    proxyContent: {
+      request: {
+        isOriginCatch: false,
+        showJson: false,
+        showMock: false,
+        data: '',
+        header: '',
+      },
+      response: {
+        isOriginCatch: false,
+        showJson: false,
+        showMock: false,
+        data: '',
+        header: '',
+      },
+    },
+  });
+};
+const handleAPiChange = (item: ApiProxy) => {
+  if (item.isEdit) {
+    item.isProxy = false;
+    return;
+  }
+  const apiProxy = cloneDeep(item);
+  try {
+    apiProxy.proxyContent.response.data = JSON.parse(
+      apiProxy.proxyContent.response.data
+    );
+  } catch (error) {}
+  if (backgroundConnect) {
+    backgroundConnect.postMessage({
+      from: 'devtools',
+      key: EVENT_KEY.API_PROXY_DEVTOOL_API_UPDATA,
+      data: {
+        webSite: webSite.value,
+        apiProxy,
+      },
+    });
+  }
+};
+const handleEdit = (item: ApiProxy) => {
+  if (item.isEdit) {
+    if (backgroundConnect) {
+      item.isEdit = false;
+      item.proxyContent.request.isOriginCatch = false;
+      item.proxyContent.response.isOriginCatch = false;
       const apiProxy = cloneDeep(item);
       try {
         apiProxy.proxyContent.response.data = JSON.parse(
           apiProxy.proxyContent.response.data
         );
       } catch (error) {}
-      if (backgroundConnect) {
-        backgroundConnect.postMessage({
-          from: 'devtools',
-          key: EVENT_KEY.API_PROXY_DEVTOOL_API_UPDATA,
-          data: {
-            webSite: webSite.value,
-            apiProxy,
-          },
-        });
-      }
-    };
-    const handleEdit = (item: ApiProxy) => {
-      if (item.isEdit) {
-        if (backgroundConnect) {
-          item.isEdit = false;
-          item.proxyContent.request.isOriginCatch = false;
-          item.proxyContent.response.isOriginCatch = false;
-          const apiProxy = cloneDeep(item);
-          try {
-            apiProxy.proxyContent.response.data = JSON.parse(
-              apiProxy.proxyContent.response.data
-            );
-          } catch (error) {}
-          backgroundConnect.postMessage({
-            from: 'devtools',
-            key: EVENT_KEY.API_PROXY_DEVTOOL_API_UPDATA,
-            data: {
-              webSite: webSite.value,
-              apiProxy,
-            },
-          });
-        }
-      } else {
-        item.isEdit = true;
-        item.isProxy = false;
-      }
-    };
-    const handleDelete = (item: ApiProxy) => {
-      if (backgroundConnect) {
-        backgroundConnect.postMessage({
-          from: 'devtools',
-          key: EVENT_KEY.API_PROXY_DEVTOOL_DELETE,
-          data: { url: webSite.value.url, id: item.id },
-        });
-      }
-    };
-    const stopPropagation = (e: Event) => {
-      e.stopPropagation();
-    };
+      backgroundConnect.postMessage({
+        from: 'devtools',
+        key: EVENT_KEY.API_PROXY_DEVTOOL_API_UPDATA,
+        data: {
+          webSite: webSite.value,
+          apiProxy,
+        },
+      });
+    }
+  } else {
+    item.isEdit = true;
+    item.isProxy = false;
+  }
+};
+const handleDelete = (item: ApiProxy) => {
+  if (backgroundConnect) {
+    backgroundConnect.postMessage({
+      from: 'devtools',
+      key: EVENT_KEY.API_PROXY_DEVTOOL_DELETE,
+      data: { url: webSite.value.url, id: item.id },
+    });
+  }
+};
+const stopPropagation = (e: Event) => {
+  e.stopPropagation();
+};
 
-    // json 视图
-    const jsonConfig = {
-      keyColor: {
-        string: '#548CFF',
-        number: '#333',
-        array: '#FF9F45',
-        object: '#139487',
-        boolean: '#66806A',
-      },
-      addType: true,
-    };
-    const JsonEditorData = ref();
-    const handleJsonEditorChange = (val: string, item: ApiProxy) => {
-      item.proxyContent.response.data = val;
-      JsonEditorData.value = val;
-    };
-
-    const handleShowJson = (item: ApiProxy) => {
-      JsonEditorData.value = item.proxyContent.response.data;
-      item.proxyContent.response.showJson = true;
-    };
-    return {
-      webSite,
-      apiProxy,
-      handleChange,
-      handleApiProxyAdd,
-      handleEdit,
-      handleDelete,
-      activeName,
-      stopPropagation,
-      handleAPiChange,
-      handleJsonEditorChange,
-      handleShowJson,
-      JsonEditorData,
-      jsonConfig,
-    };
+// json 视图
+const jsonConfig = {
+  keyColor: {
+    string: '#548CFF',
+    number: '#333',
+    array: '#FF9F45',
+    object: '#139487',
+    boolean: '#66806A',
   },
-});
+  addType: true,
+};
+const JsonEditorData = ref();
+const handleJsonEditorChange = (val: string, item: ApiProxy) => {
+  item.proxyContent.response.data = val;
+  JsonEditorData.value = val;
+};
+
+const handleShowJson = (item: ApiProxy) => {
+  JsonEditorData.value = item.proxyContent.response.data;
+  item.proxyContent.response.showJson = true;
+};
 </script>
 
 <style lang="less">

@@ -66,7 +66,7 @@ const getTsConfig = (inputPath: string): DefineTsConfig => {
 };
 
 export const buildVue = async () => {
-  const buildList = ['popup', 'devtool'];
+  const buildList = ['popup'];
   buildList.forEach(async (x) => {
     await buildVueLib(getVueConfig(x));
   });

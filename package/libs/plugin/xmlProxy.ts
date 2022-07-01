@@ -1,147 +1,125 @@
-import cloneDeep from 'lodash.clonedeep';
-import { IsurlMatch, windowPostMessage } from '../utils';
-import type { EventKey } from '../config/const';
+export interface OpenBody {
+  method: string;
+  url: string | URL;
+  async: boolean;
+  username?: string | null;
+  password?: string | null;
+}
+export interface GlobalProxyContext {
+  openContent?: OpenBody;
+  sendContent?: SendBody;
+  responseContext?: ResponseBody;
+}
+export type ResponseBody = XMLHttpRequest['response'];
 
-export const initXMLHttpRequest = (
-  originXmlHttpRequest: typeof window.XMLHttpRequest,
-  apiProxy: ApiProxy[],
-  beforeXmlOpen: (
-    method: string,
-    url: string | URL
-  ) => { method: string; url: string | URL },
-  beforeXmlRequest: (
-    proxyContent: ProxyContent,
-    body?: Document | XMLHttpRequestBodyInit | null | undefined
-  ) => Document | XMLHttpRequestBodyInit | null | undefined,
-  beforeXmlResponse: (proxyContent: ProxyContent) => any
-) => {
-  class SelfXmlHttpRequest extends originXmlHttpRequest {
-    isProxySend = true;
-    proxyUrl: string | URL = '';
-    proxyMethod = '';
-    apiProxy: undefined | ApiProxy = undefined; // 需要拦截的api
-    isMock = false;
+export type SendBody = Document | XMLHttpRequestBodyInit | null | undefined;
+
+export type BeforeXmlOpen = (
+  body: OpenBody,
+  context: GlobalProxyContext
+) => OpenBody;
+
+export type AfterXmlOpen = (
+  body: OpenBody,
+  context: GlobalProxyContext
+) => void;
+
+export type BeforeXmlSend = (
+  body: SendBody,
+  context: GlobalProxyContext
+) => SendBody;
+
+export type AfterXmlSend = (
+  body: SendBody,
+  context: GlobalProxyContext
+) => void;
+
+export type BeforeXmlResponse = (context: GlobalProxyContext) => ResponseBody;
+
+export type AfterXmlResponese = (
+  body: ResponseBody,
+  context: GlobalProxyContext
+) => void;
+
+export interface XMLHttpHooks {
+  beforeXmlOpen?: BeforeXmlOpen;
+  afterXmlOpen?: AfterXmlOpen;
+  beforeXmlSend?: BeforeXmlSend;
+  afterXmlSend?: AfterXmlSend;
+  beforeXmlResponse?: BeforeXmlResponse;
+  afterXmlResponese?: AfterXmlResponese;
+}
+export interface XMLHttpRequestParameter extends XMLHttpHooks {
+  originXML: typeof window.XMLHttpRequest;
+}
+
+export const initXMLHttpRequest = ({
+  originXML,
+  beforeXmlOpen,
+  afterXmlOpen,
+  beforeXmlSend,
+  afterXmlSend,
+  beforeXmlResponse,
+  afterXmlResponese,
+}: XMLHttpRequestParameter) => {
+  class SelfXmlHttpRequest extends originXML {
     // 自定义属性
+    globalContext: GlobalProxyContext = {};
     constructor() {
       super();
     }
-    sendMessageToContent(key: EventKey, data: any) {
-      const message: PostMessage = { from: 'inject_script', key, data };
-      windowPostMessage(message);
-    }
-    async open(
+    open(
       method: string,
       url: string | URL,
       async = true,
       username?: string | null,
       password?: string | null
     ) {
-      if (
-        apiProxy.some(
-          (x) =>
-            x.isProxy &&
-            x.method === method &&
-            IsurlMatch(url.toString(), [x.url])
-        )
-      ) {
-        apiProxy.forEach((x) => {
-          if (x.method === method && IsurlMatch(url.toString(), [x.url])) {
-            this.apiProxy = x; // 获取代理信息
-          }
-        });
-        this.isMock = true;
-        console.log(`[ApiProxy]: 拦截到: ${method}  ${url}`);
-      }
-      const openQuery = beforeXmlOpen(method, url);
-      this.proxyUrl = openQuery.url;
-      this.proxyMethod = openQuery.method;
-      await originXmlHttpRequest.prototype.open.apply(this, [
-        openQuery.method,
-        openQuery.url,
-        async,
-        username,
-        password,
+      const originOpenBody = { method, url, async, username, password };
+      this.globalContext.openContent = originOpenBody;
+      const body = beforeXmlOpen
+        ? beforeXmlOpen(originOpenBody, this.globalContext)
+        : originOpenBody;
+      originXML.prototype.open.apply(this, [
+        body.method,
+        body.url,
+        body.async,
+        body.username,
+        body.password,
       ]);
-      if (this.apiProxy?.proxyContent.request.header) {
-        try {
-          const headers = this.apiProxy?.proxyContent.request.header
-            .replace(/^"|"$/g, '')
-            .split(',');
-          headers.forEach((x: string) => {
-            const item = x.split(':');
-            this.setRequestHeader(item[0], item[1]);
-            console.log(`[ApiProxy]: 已添加请求头: ${item[0]}:${item[1]}`);
-          });
-        } catch (error) {
-          console.log(`[ApiProxy]: ${error}`);
-        }
-      }
+      afterXmlOpen && afterXmlOpen(body, this.globalContext);
     }
-    async send(body?: Document | XMLHttpRequestBodyInit | null) {
-      if (this.isMock && this.apiProxy) {
-        if (
-          this.apiProxy.proxyContent.request.data &&
-          this.apiProxy.proxyContent.request.isOriginCatch !== true
-        ) {
-          this.apiProxy.proxyContent.request.isOriginCatch = false;
-          const selfBody = await beforeXmlRequest(
-            this.apiProxy.proxyContent,
-            body
-          );
-          console.log('[ApiProxy]: xml请求参数已被apiProxy代理');
-          await originXmlHttpRequest.prototype.send.call(this, selfBody);
-        } else {
-          this.apiProxy.proxyContent.request.isOriginCatch = true;
-          this.apiProxy.proxyContent.request.data = body;
-          this.sendMessageToContent('API_PROXY_INJECT_UPDATA', {
-            url: window.location.href,
-            apiProxy: cloneDeep(this.apiProxy),
-          });
-          await originXmlHttpRequest.prototype.send.call(this, body);
-        }
-        if (
-          this.apiProxy.proxyContent.response.data &&
-          this.apiProxy.proxyContent.response.isOriginCatch !== true
-        ) {
-          this.apiProxy.proxyContent.response.isOriginCatch = false;
-          const selfresponse = await beforeXmlResponse(
-            this.apiProxy.proxyContent
-          );
-          console.log('[ApiProxy]: xml响应参数已被apiProxy代理');
-          Object.defineProperty(this, 'response', {
-            value: selfresponse,
+    send(originBody?: Document | XMLHttpRequestBodyInit | null) {
+      this.globalContext.sendContent = originBody;
+      const body = beforeXmlSend
+        ? beforeXmlSend(originBody, this.globalContext)
+        : originBody;
+      originXML.prototype.send.call(this, body);
+      afterXmlSend && afterXmlSend(body, this.globalContext);
 
-            configurable: true,
-          });
-          Object.defineProperty(this, 'responseText', {
-            value: selfresponse,
-            configurable: true,
-          });
-          Object.defineProperty(this, 'status', {
-            value: 200,
-            configurable: true,
-          }); // 当存在代理时，将http状态码更改为200
-        } else {
-          this.addEventListener('readystatechange', () => {
-            if (this.readyState === 4) {
-              if (this.apiProxy) {
-                this.apiProxy.proxyContent.response.data = cloneDeep(
-                  this.response
-                );
-                this.apiProxy.proxyContent.response.isOriginCatch = true;
-                this.apiProxy.proxyContent.response.header =
-                  this.getAllResponseHeaders();
-                this.sendMessageToContent('API_PROXY_INJECT_UPDATA', {
-                  url: window.location.href,
-                  apiProxy: cloneDeep(this.apiProxy),
-                });
-              }
-            }
-          });
-        }
-      } else {
-        await originXmlHttpRequest.prototype.send.call(this, body);
+      const responseBody =
+        beforeXmlResponse && beforeXmlResponse(this.globalContext);
+      if (responseBody) {
+        Object.defineProperty(this, 'response', {
+          value: responseBody,
+          configurable: true,
+        });
+        Object.defineProperty(this, 'responseText', {
+          value: responseBody,
+          configurable: true,
+        });
+        Object.defineProperty(this, 'status', {
+          value: 200,
+          configurable: true,
+        });
       }
+      this.addEventListener('readystatechange', () => {
+        if (this.readyState === 4) {
+          this.globalContext.responseContext = this.response;
+          afterXmlResponese &&
+            afterXmlResponese(this.response, this.globalContext);
+        }
+      });
     }
   }
   return SelfXmlHttpRequest;

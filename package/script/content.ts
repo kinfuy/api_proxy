@@ -5,6 +5,17 @@ import {
 } from '../libs/chrome';
 import { EVENT_KEY } from '../libs/config/const';
 import { addEventListener, windowPostMessage } from '../libs/utils';
+
+const timer = setInterval(() => {
+  try {
+    injectCustomJs('script/custom.js').then(() => {
+      clearInterval(timer);
+    });
+  } catch (error) {
+    console.log(error);
+  }
+}, 10);
+
 //谷歌监听消息
 chromeAddListenerMessage((message: PostMessage) => {
   if (message.from !== 'background') return; //只接收来着background的信息
@@ -45,12 +56,10 @@ addEventListener(window, 'message', (info: any) => {
       break;
   }
 });
+
 document.onreadystatechange = async function () {
-  if (document.readyState === 'interactive') {
-    await injectCustomJs('script/custom.js');
-  }
   if (document.readyState === 'complete') {
-    await sendMessageToExtension({
+    sendMessageToExtension({
       from: 'content_script',
       key: EVENT_KEY.API_PROXY_INJECT_INIT,
       data: { url: window.location.href },

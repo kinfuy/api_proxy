@@ -13,19 +13,25 @@ export const getChromeUrl = (path: string) => {
  * @returns
  */
 export const injectCustomJs = (jsPath?: string) => {
-  jsPath = jsPath || 'libs/script/inject.js';
-  const temp = document.createElement('script');
-  if (!temp) return new Error('发生了错误');
-  temp.setAttribute('type', 'text/javascript');
-  temp.src = getChromeUrl(jsPath);
-  temp.onload = function () {
-    if (temp.parentNode) {
-      temp.parentNode.removeChild(temp);
-    } else {
-      document.removeChild(temp);
+  return new Promise((resolve, reject) => {
+    try {
+      jsPath = jsPath || 'script/inject.js';
+      const temp = document.createElement('script');
+      temp.setAttribute('type', 'text/javascript');
+      temp.src = getChromeUrl(jsPath);
+      temp.onload = function () {
+        if (temp.parentNode) {
+          temp.parentNode.removeChild(temp);
+        } else {
+          document.removeChild(temp);
+        }
+      };
+      document.head.appendChild(temp);
+      resolve(true);
+    } catch (error) {
+      reject(error);
     }
-  };
-  document.head.appendChild(temp);
+  });
 };
 
 /**

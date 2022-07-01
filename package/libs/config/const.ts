@@ -1,4 +1,7 @@
 export type EventKey = keyof typeof EVENT_KEY;
+
+export const nameSpace = 'API_PROXY';
+
 export const EVENT_KEY = {
   /**
    * DEVTOOL删除 API

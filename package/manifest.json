@@ -25,7 +25,6 @@
       "run_at": "document_start"
     }
   ],
-  "devtools_page": "devtool/index.html",
   "web_accessible_resources": [
     {
       "resources": ["script/custom.js"],
